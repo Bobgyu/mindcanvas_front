@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 flex place-items-center min-w-80 min-h-screen bg-background-green;
+  }
+  
+  h1 {
+    @apply text-5xl leading-tight;
+  }
+  
+  a {
+    @apply font-medium text-blue-600 no-underline;
+  }
+  
+  a:hover {
+    @apply text-blue-500;
+  }
+}
+
+@layer components {
+  /* 공통 스타일 */
+  #root {
+    @apply bg-white w-29rem h-58rem rounded-3xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+  }
+  
+  /* App 컴포넌트 스타일 */
+  .logo-area {
+    @apply h-[55%];
+  }
+  
+  .login-area {
+    @apply h-[45%] flex flex-col gap-4 items-center;
+  }
+  
+  .login-button {
+    @apply w-[70%] h-20 rounded-2xl border-0 bg-primary-green text-white text-xl font-bold;
+    @apply hover:bg-primary-green-hover hover:scale-105 hover:shadow-lg;
+    @apply active:bg-primary-green-active active:scale-95;
+    @apply transition-all duration-200;
+  }
+  
+  .join {
+    @apply m-8 text-lg;
+  }
+  
+  /* Login 컴포넌트 스타일 */
+  .login-area1 {
+    @apply h-[60%] flex flex-col gap-4 items-center justify-center;
+  }
+  
+  .textarea {
+    @apply w-[70%] h-8 px-2 py-2 rounded-2xl text-lg;
+  }
+  
+  .login {
+    @apply m-8 text-lg;
+  }
+  
+  /* MainPage 컴포넌트 스타일 */
+  .options {
+    @apply h-[85%];
+  }
+  
+  .picture-options {
+    @apply h-[50%] flex flex-col gap-4 justify-center mx-10;
+  }
+  
+  .draw-options {
+    @apply h-[50%] flex flex-col gap-4 justify-center mx-10;
+  }
+  
+  .option {
+    @apply h-16 w-full px-4 py-2 rounded-2xl text-xl border-0 bg-primary-green text-white font-bold;
+    @apply hover:bg-primary-green-hover hover:scale-105 hover:shadow-lg;
+    @apply active:bg-primary-green-active active:scale-95;
+    @apply transition-all duration-200;
+  }
+  
+  .lower-options {
+    @apply h-[15%] flex gap-2 items-center justify-center;
+  }
+  
+  .lower-option {
+    @apply h-12 px-4 py-2 rounded-3xl text-lg border-0 bg-primary-green text-white font-bold;
+    @apply hover:bg-primary-green-hover hover:scale-105 hover:shadow-lg;
+    @apply active:bg-primary-green-active active:scale-95;
+    @apply transition-all duration-200;
+  }
+  
+  /* MyPage 컴포넌트 스타일 */
+  .upper-options {
+    @apply h-[85%] flex flex-col gap-4 items-center justify-center;
+  }
+  
+  .upper-option {
+    @apply w-[65%] h-16 text-xl rounded-2xl border-0 bg-primary-green text-white font-bold;
+    @apply hover:bg-primary-green-hover hover:scale-105 hover:shadow-lg;
+    @apply active:bg-primary-green-active active:scale-95;
+    @apply transition-all duration-200;
+  }
+  
+  /* Coordinator 컴포넌트 스타일 */
+  .goback {
+    @apply h-[5%] pl-4;
+  }
+  
+  .profile-area {
+    @apply w-[90%] h-[20%] mt-6 mx-auto;
+  }
+  
+  .coordi-profile {
+    @apply flex justify-between items-center;
+  }
+  
+  .coordi-profile p,
+  .coordi-profile h2 {
+    @apply leading-none;
+  }
+  
+  .profile-picture {
+    @apply w-[35%];
+  }
+  
+  .imsi-picture {
+    @apply w-32 h-32 rounded-full bg-gray-400;
+  }
+  
+  .coordi-introduce {
+    @apply w-[60%];
+  }
+  
+  .info-area {
+    @apply h-[20%];
+  }
+  
+  .info-area h3 {
+    @apply pl-4;
+  }
+  
+  .info {
+    @apply h-[75%] bg-light-green;
+  }
+  
+  .info p {
+    @apply p-4;
+  }
+  
+  .evaluate-coordi {
+    @apply flex justify-end;
+  }
+  
+  .evaluate-button {
+    @apply h-10 w-[30%] text-lg border-0 rounded bg-primary-green text-white font-bold;
+    @apply hover:bg-primary-green-hover hover:scale-105 hover:shadow-lg;
+    @apply active:bg-primary-green-active active:scale-95;
+    @apply transition-all duration-200;
+  }
+  
+  .coordi-options {
+    @apply px-12 py-8;
+  }
+  
+  .coordi-options p {
+    @apply leading-9 text-lg;
+  }
+}
