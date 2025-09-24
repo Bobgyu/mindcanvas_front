@@ -10,6 +10,10 @@ import MainPage from './MainPage.jsx'
 import Coordinator from './Coordinator.jsx'
 import Home from './draw/home.jsx'
 import Analysis from './draw/analysis.jsx'
+import Tree from './draw/tree.jsx'
+import TreeAnalysis from './draw/tree-analysis.jsx'
+import Person from './draw/person.jsx'
+import PersonAnalysis from './draw/person-analysis.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -23,6 +27,10 @@ createRoot(document.getElementById('root')).render(
         <Route path="/mypage/coordinator" element={<Coordinator />} />
         <Route path="/draw/home" element={<Home />} />
         <Route path="/draw/analysis" element={<Analysis />} />
+        <Route path="/draw/tree" element={<Tree />} />
+        <Route path="/draw/tree-analysis" element={<TreeAnalysis />} />
+        <Route path="/draw/person" element={<Person />} />
+        <Route path="/draw/person-analysis" element={<PersonAnalysis />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

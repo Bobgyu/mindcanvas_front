@@ -14,14 +14,22 @@ function MainPage() {
     navigate('/draw/home')   // 집 그리기 페이지로 이동
   }
 
+  const gotoTree = () => {
+    navigate('/draw/tree')   // 나무 그리기 페이지로 이동
+  }
+
+  const gotoPerson = () => {
+    navigate('/draw/person')   // 사람 그리기 페이지로 이동
+  }
+
   return (
     <>
     <div className='options'>
       <div className='picture-options'>
         <h2>그림심리테스트</h2>
         <input type="button" className='option' value="집" onClick={gotoHome} />
-        <input type="button" className='option' value="나무" />
-        <input type="button" className='option' value="사람" />
+        <input type="button" className='option' value="나무" onClick={gotoTree} />
+        <input type="button" className='option' value="사람" onClick={gotoPerson} />
       </div>
 
       <div className='draw-options'>
