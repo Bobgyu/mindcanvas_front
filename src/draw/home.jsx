@@ -261,6 +261,7 @@ function Home() {
               }}
             />
           )}
+          
         </div>
         
         {/* 하단 도구 바 - 고정 위치 */}
@@ -501,6 +502,7 @@ function Home() {
             style={{ width: '80px' }}
           />
         </div>
+
       </div>
     </>
   )

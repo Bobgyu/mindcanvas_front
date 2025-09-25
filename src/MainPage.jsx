@@ -22,6 +22,10 @@ function MainPage() {
     navigate('/draw/person')   // 사람 그리기 페이지로 이동
   }
 
+  const gotoColorfill = () => {
+    navigate('/draw/colorfill')   // 색칠하기 페이지로 이동
+  }
+
   return (
     <>
     <div className='options'>
@@ -35,7 +39,7 @@ function MainPage() {
       <div className='draw-options'>
         <h2>그리기</h2>
         <input type="button" className='option' value="그림일기" />
-        <input type="button" className='option' value="색칠하기" />
+        <input type="button" className='option' value="색칠하기" onClick={gotoColorfill} />
         <input type="button" className='option' value="자유롭게" />
       </div>
     </div>

@@ -14,6 +14,8 @@ import Tree from './draw/tree.jsx'
 import TreeAnalysis from './draw/tree-analysis.jsx'
 import Person from './draw/person.jsx'
 import PersonAnalysis from './draw/person-analysis.jsx'
+import Colorfill from './draw/colorfill.jsx'
+import Fillcanvas from './draw/fillcanvas.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -31,6 +33,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/draw/tree-analysis" element={<TreeAnalysis />} />
         <Route path="/draw/person" element={<Person />} />
         <Route path="/draw/person-analysis" element={<PersonAnalysis />} />
+        <Route path="/draw/colorfill" element={<Colorfill />} />
+        <Route path="/draw/fillcanvas" element={<Fillcanvas />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
