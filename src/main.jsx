@@ -16,6 +16,7 @@ import Person from './draw/person.jsx'
 import PersonAnalysis from './draw/person-analysis.jsx'
 import Colorfill from './draw/colorfill.jsx'
 import Fillcanvas from './draw/fillcanvas.jsx'
+import EmotionDiary from './diary/emtiondiary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -35,6 +36,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/draw/person-analysis" element={<PersonAnalysis />} />
         <Route path="/draw/colorfill" element={<Colorfill />} />
         <Route path="/draw/fillcanvas" element={<Fillcanvas />} />
+        <Route path="/diary/emotion" element={<EmotionDiary />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
