@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 function TreeAnalysis() {
   const navigate = useNavigate()
   const [analysisResult, setAnalysisResult] = useState('')
+  const [speechAnalysis, setSpeechAnalysis] = useState('')
   const [drawnImage, setDrawnImage] = useState(null)
   const [analyzedImage, setAnalyzedImage] = useState(null)
+  const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
 
   const handleBack = () => {
     navigate('/draw/tree')
@@ -17,6 +19,39 @@ function TreeAnalysis() {
 
   const findCounselingCenter = () => {
     alert('근처 상담센터 찾기 기능은 준비 중입니다!')
+  }
+
+  const getChatbotAnalysis = async (analysisData) => {
+    try {
+      setIsLoadingSpeech(true)
+      const response = await fetch('http://localhost:5000/api/chatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: "이 나무 그림 분석 결과를 바탕으로 따뜻하고 친근한 어투로 심리 분석을 해주세요. 전문적이지만 이해하기 쉽게 설명해주세요.",
+          conversation_history: [],
+          image_analysis_result: analysisData
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setSpeechAnalysis(data.response)
+        } else {
+          setSpeechAnalysis('분석 결과를 처리하는 중 오류가 발생했습니다.')
+        }
+      } else {
+        setSpeechAnalysis('서버와의 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요.')
+      }
+    } catch (error) {
+      console.error('챗봇 응답 오류:', error)
+      setSpeechAnalysis('분석 결과를 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setIsLoadingSpeech(false)
+    }
   }
 
   useEffect(() => {
@@ -140,6 +175,9 @@ function TreeAnalysis() {
         }
         
         setAnalysisResult(resultText)
+        
+        // 챗봇 분석 요청
+        getChatbotAnalysis(parsedAnalysis)
       } catch (error) {
         console.error('분석 결과 파싱 오류:', error)
         setAnalysisResult('분석 결과를 불러오는 중 오류가 발생했습니다.')
@@ -200,6 +238,20 @@ function TreeAnalysis() {
 
   return (
     <>
+      {/* CSS 애니메이션 */}
+      <style>{`
+        @keyframes typing {
+          0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.4;
+          }
+          30% {
+            transform: translateY(-10px);
+            opacity: 1;
+          }
+        }
+      `}</style>
+      
       {/* 뒤로가기 */}
       <div className='goback'>
         <p onClick={handleBack} style={{ cursor: 'pointer' }}>뒤로가기</p>
@@ -323,6 +375,84 @@ function TreeAnalysis() {
             lineHeight: '1.5'
           }}>
             {analysisResult || '분석 결과가 여기에 표시됩니다.'}
+          </div>
+        </div>
+
+        {/* 말하기 분석 영역 */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '15px',
+          alignItems: 'center'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: '#333',
+            margin: 0
+          }}>
+            말하기 분석
+          </h3>
+          <div style={{
+            width: '90%',
+            maxWidth: '600px',
+            minHeight: '150px',
+            border: '2px solid #000',
+            borderRadius: '10px',
+            padding: '15px',
+            backgroundColor: '#f9f9f9',
+            fontSize: '14px',
+            color: '#333',
+            whiteSpace: 'pre-wrap',
+            textAlign: 'left',
+            overflow: 'auto',
+            lineHeight: '1.6',
+            display: 'flex',
+            alignItems: isLoadingSpeech ? 'center' : 'flex-start',
+            justifyContent: 'center'
+          }}>
+            {isLoadingSpeech ? (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#666'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: '4px',
+                  alignItems: 'center'
+                }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#666',
+                    animation: 'typing 1.4s infinite ease-in-out'
+                  }}></div>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#666',
+                    animation: 'typing 1.4s infinite ease-in-out',
+                    animationDelay: '0.2s'
+                  }}></div>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#666',
+                    animation: 'typing 1.4s infinite ease-in-out',
+                    animationDelay: '0.4s'
+                  }}></div>
+                </div>
+                <span>챗봇이 따뜻한 분석을 준비하고 있어요...</span>
+              </div>
+            ) : (
+              speechAnalysis || '말하기 분석 결과가 여기에 표시됩니다.'
+            )}
           </div>
         </div>
 
