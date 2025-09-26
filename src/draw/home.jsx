@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
 
+
 function Home() {
   const navigate = useNavigate()
   const canvasRef = useRef(null)
@@ -93,8 +94,11 @@ function Home() {
     link.click()
   }
 
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+
   const analyzeDrawing = async () => {
     try {
+      setIsAnalyzing(true)
       const canvas = canvasRef.current
       const imageData = canvas.toDataURL('image/png')
       
@@ -128,6 +132,8 @@ function Home() {
     } catch (error) {
       console.error('분석 오류:', error)
       alert('분석 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.')
+    } finally {
+      setIsAnalyzing(false)
     }
   }
 
@@ -456,22 +462,24 @@ function Home() {
           {/* 분석 버튼 */}
           <button 
             onClick={analyzeDrawing}
+            disabled={isAnalyzing}
             style={{ 
               width: '50px', 
               height: '50px', 
               borderRadius: '50%', 
               border: '1px solid #ccc',
-              backgroundColor: 'white',
-              cursor: 'pointer',
+              backgroundColor: isAnalyzing ? '#f0f0f0' : 'white',
+              cursor: isAnalyzing ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '12px',
               fontWeight: 'bold',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              opacity: isAnalyzing ? 0.6 : 1
             }}
           >
-            분석
+            {isAnalyzing ? '분석중...' : '분석'}
           </button>
         </div>
         
@@ -502,6 +510,7 @@ function Home() {
             style={{ width: '80px' }}
           />
         </div>
+
 
       </div>
     </>
