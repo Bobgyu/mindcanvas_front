@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import CounselingCenterSearch from '../components/CounselingCenterSearch'
 
 function Analysis() {
   const navigate = useNavigate()
@@ -9,6 +10,7 @@ function Analysis() {
   const [drawnImage, setDrawnImage] = useState(null)
   const [analyzedImage, setAnalyzedImage] = useState(null)
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
+  const [showCounselingSearch, setShowCounselingSearch] = useState(false)
 
   const handleBack = () => {
     navigate('/draw/home')
@@ -19,7 +21,12 @@ function Analysis() {
   }
 
   const findCounselingCenter = () => {
-    alert('근처 상담센터 찾기 기능은 준비 중입니다!')
+    setShowCounselingSearch(true)
+  }
+
+  const handleLocationSelect = (location) => {
+    console.log('선택된 위치:', location)
+    // 선택된 위치에 대한 추가 처리 로직
   }
 
   const getChatbotAnalysis = async (analysisData) => {
@@ -454,6 +461,14 @@ function Analysis() {
           </button>
         </div>
       </div>
+
+      {/* 상담센터 찾기 모달 */}
+      {showCounselingSearch && (
+        <CounselingCenterSearch
+          onLocationSelect={handleLocationSelect}
+          onClose={() => setShowCounselingSearch(false)}
+        />
+      )}
     </>
   )
 }
