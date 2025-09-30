@@ -16,7 +16,7 @@ function Join() {
     agreePrivacy: false,
     agreeMarketing: false,
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const navigate = useNavigate(); // 라우터 이동 함수
   const [emailCheckMessage, setEmailCheckMessage] = useState('');
   const [isEmailAvailable, setIsEmailAvailable] = useState(false);
@@ -61,11 +61,13 @@ function Join() {
     //   return;
     // }
 
-    // 필수 동의 항목 확인 (이용약관, 개인정보 취급방침)
+    // 필수 동의 항목 확인 (이용약관, 개인정보 취급방침) - 임시로 주석 처리
+    /*
     if (!formData.agreeTerms || !formData.agreePrivacy) {
         setError('이용약관 및 개인정보 취급방침에 동의해야 합니다.');
         return;
     }
+    */
 
     try {
       const response = await axios.post('http://localhost:5000/api/register', {
@@ -75,6 +77,10 @@ function Join() {
         phone: formData.phone,
         birthdate: formData.birthdate,
         gender: formData.gender,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.status === 201) {
@@ -301,7 +307,9 @@ function Join() {
             </div>
           </div>
           
-          {/* 약관 동의 */} 
+          {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+
+          {/* 약관 동의 */}
           <div className="space-y-2">
             <label className="inline-flex items-center">
               <input
@@ -347,8 +355,6 @@ function Join() {
               </label>
             </div>
           </div>
-
-          {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
           
           {/* 회원가입 버튼 */}
           <button

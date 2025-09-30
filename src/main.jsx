@@ -7,6 +7,7 @@ import Join from './Join.jsx'
 import Login from './Login.jsx'
 import MyPage from './MyPage.jsx'
 import MainPage from './MainPage.jsx'
+import MyGallery from './MyGallery.jsx' // MyGallery 임포트
 import Coordinator from './Coordinator.jsx'
 import Home from './draw/home.jsx'
 import Analysis from './draw/analysis.jsx'
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/login" element={<Login />} />
         <Route path="/mainpage" element={<MainPage />} />
         <Route path="/mypage" element={<MyPage />} />
+        <Route path="/mypage/gallery" element={<MyGallery />} /> {/* MyGallery 라우팅 추가 */}
         <Route path="/mypage/coordinator" element={<Coordinator />} />
         <Route path="/draw/home" element={<Home />} />
         <Route path="/draw/analysis" element={<Analysis />} />

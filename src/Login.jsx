@@ -31,6 +31,10 @@ function Login() {
         username: fullEmail, // 백엔드는 'username'을 기대합니다.
         password: password,
         remember: rememberMe,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.status === 200) {
