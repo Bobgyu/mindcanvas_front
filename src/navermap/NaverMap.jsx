@@ -127,7 +127,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
       if (!mapRef.current) return;
 
       // 환경 변수 확인 및 디버깅
-      const clientId = import.meta.env.VITE_NAVER_CLIENT_ID || '7b32ojdrsw'; // 임시 하드코딩
+      const clientId = import.meta.env.VITE_NAVER_CLIENT_ID;
       console.log('=== 환경 변수 디버깅 ===');
       console.log('import.meta.env:', import.meta.env);
       console.log('VITE_NAVER_CLIENT_ID:', import.meta.env.VITE_NAVER_CLIENT_ID);
@@ -376,7 +376,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
                 
                 <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
                   <h5 className="font-semibold text-blue-800 mb-1">✅ 확인된 설정:</h5>
-                  <p className="text-blue-700">• Client ID: 7b32ojdrsw (Maps API)</p>
+                  <p className="text-blue-700">• Client ID: 환경변수에서 로드됨</p>
                   <p className="text-blue-700">• 웹 서비스 URL: http://localhost:3000 등록됨</p>
                   <p className="text-blue-700">• Application: CodlabApp</p>
                 </div>
