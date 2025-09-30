@@ -42,7 +42,7 @@ const loadNaverMapScript = (clientId) => {
   });
 };
 
-const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation = null, currentLocation = null }) => {
+const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation = null, currentLocation = null, searchResults = [] }) => {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef([]);
@@ -187,17 +187,124 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
     }
   }, [center]);
 
-  // 선택된 위치에 마커 표시
+  // 검색 결과 마커들 표시
+  useEffect(() => {
+    if (mapInstance.current && searchResults && searchResults.length > 0) {
+      // 기존 검색 결과 마커들 제거 (현재 위치 마커는 유지)
+      markersRef.current = markersRef.current.filter(marker => marker.title === '현재 위치');
+      
+      // 검색 결과 마커들 추가
+      searchResults.forEach((result, index) => {
+        if (result.coords) {
+          addSearchResultMarker(result, index);
+        }
+      });
+    }
+  }, [searchResults]);
+
+  // 검색 결과 마커 추가 함수
+  const addSearchResultMarker = (result, index) => {
+    if (!mapInstance.current || !window.naver || !window.naver.maps) return;
+
+    const marker = new window.naver.maps.Marker({
+      position: new window.naver.maps.LatLng(result.coords.lat, result.coords.lng),
+      map: mapInstance.current,
+      icon: {
+        content: `
+          <div style="
+            width: 30px;
+            height: 30px;
+            background: #ff6b6b;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+          ">
+            ${index + 1}
+          </div>
+        `,
+        size: new window.naver.maps.Size(30, 30),
+        anchor: new window.naver.maps.Point(15, 15)
+      },
+      title: result.title
+    });
+
+    // 정보창 생성
+    const infoWindow = new window.naver.maps.InfoWindow({
+      content: `
+        <div style="padding: 12px; min-width: 250px; max-width: 300px;">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <div style="
+              width: 20px;
+              height: 20px;
+              background: #ff6b6b;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 10px;
+              font-weight: bold;
+              margin-right: 8px;
+            ">${index + 1}</div>
+            <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${result.title}</h3>
+          </div>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #666; line-height: 1.4;">${result.address}</p>
+          ${result.category ? `<span style="display: inline-block; margin-bottom: 4px; padding: 2px 6px; background: #e3f2fd; color: #1976d2; border-radius: 3px; font-size: 11px;">${result.category}</span>` : ''}
+          ${result.description ? `<p style="margin: 4px 0 0 0; font-size: 11px; color: #888; line-height: 1.3;">${result.description}</p>` : ''}
+        </div>
+      `
+    });
+
+    // 마커 클릭 시 정보창 표시
+    window.naver.maps.Event.addListener(marker, 'click', () => {
+      infoWindow.open(mapInstance.current, marker);
+    });
+
+    markersRef.current.push(marker);
+  };
+
+  // 선택된 위치에 마커 표시 (단일 선택용)
   useEffect(() => {
     if (mapInstance.current && selectedLocation && selectedLocation.coords) {
-      // 기존 마커들 제거
-      markersRef.current.forEach(marker => marker.setMap(null));
-      markersRef.current = [];
+      // 기존 선택 마커들 제거 (현재 위치와 검색 결과 마커는 유지)
+      markersRef.current = markersRef.current.filter(marker => 
+        marker.title === '현재 위치' || marker.title !== selectedLocation.title
+      );
 
-      // 새 마커 생성
+      // 새 선택 마커 생성
       const marker = new window.naver.maps.Marker({
         position: new window.naver.maps.LatLng(selectedLocation.coords.lat, selectedLocation.coords.lng),
         map: mapInstance.current,
+        icon: {
+          content: `
+            <div style="
+              width: 25px;
+              height: 25px;
+              background: #4285f4;
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <div style="
+                width: 8px;
+                height: 8px;
+                background: white;
+                border-radius: 50%;
+              "></div>
+            </div>
+          `,
+          size: new window.naver.maps.Size(25, 25),
+          anchor: new window.naver.maps.Point(12.5, 12.5)
+        },
         title: selectedLocation.title,
       });
 

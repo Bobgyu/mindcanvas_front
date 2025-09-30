@@ -6,12 +6,13 @@ import SearchResults from '../navermap/SearchResults'
 
 const CounselingCenterPage = () => {
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('심리상담센터')
+  const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentLocation, setCurrentLocation] = useState(null)
   const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }) // 서울 중심
   const [selectedLocation, setSelectedLocation] = useState(null)
+  const [autoSearchTriggered, setAutoSearchTriggered] = useState(false)
 
   // 현재 위치 가져오기
   const getCurrentLocation = () => {
@@ -30,6 +31,10 @@ const CounselingCenterPage = () => {
         setCurrentLocation({ lat, lng })
         setMapCenter({ lat, lng })
         setIsLoading(false)
+        
+        // 현재 위치 확인 후 자동으로 상담센터 검색 실행
+        console.log('🔍 현재 위치 확인 완료, 상담센터 자동 검색 시작...')
+        setAutoSearchTriggered(true)
       },
       (error) => {
         console.error('❌ 위치 가져오기 오류:', error)
@@ -42,6 +47,13 @@ const CounselingCenterPage = () => {
         maximumAge: 300000
       }
     )
+  }
+
+  // 자동 상담센터 검색 실행
+  const handleAutoSearch = () => {
+    console.log('🔍 자동 상담센터 검색 실행')
+    setSearchQuery('') // 빈 검색어로 상담센터 자동 검색
+    setAutoSearchTriggered(true)
   }
 
   // 네이버 검색 API 호출
@@ -190,6 +202,7 @@ const CounselingCenterPage = () => {
           onSearch={setSearchQuery}
           onCurrentLocation={getCurrentLocation}
           locationLoading={isLoading}
+          onAutoSearch={handleAutoSearch}
         />
       </div>
 
@@ -216,6 +229,7 @@ const CounselingCenterPage = () => {
             onLocationSelect={handleLocationSelect}
             onResultsChange={handleResultsChange}
             currentLocation={currentLocation}
+            autoSearchTriggered={autoSearchTriggered}
           />
         </div>
 
@@ -240,6 +254,7 @@ const CounselingCenterPage = () => {
               center={mapCenter} 
               selectedLocation={selectedLocation}
               currentLocation={currentLocation}
+              searchResults={searchResults}
             />
           </div>
         </div>

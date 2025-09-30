@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false }) => {
+const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false, onAutoSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleSubmit = (e) => {
@@ -17,6 +17,10 @@ const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false }) => 
   const handleCurrentLocation = () => {
     if (onCurrentLocation) {
       onCurrentLocation();
+    }
+    // 현재 위치 확인 후 자동으로 상담센터 검색 실행
+    if (onAutoSearch) {
+      onAutoSearch();
     }
   };
 

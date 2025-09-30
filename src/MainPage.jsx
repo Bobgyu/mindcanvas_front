@@ -52,7 +52,7 @@ function MainPage() {
 
       <div className='draw-options'>
         <h2>그리기</h2>
-        <input type="button" className='option' value="그림일기" onClick={gotoEmotionDiary} />
+        <input type="button" className='option' value="마음일기" onClick={gotoEmotionDiary} />
         <input type="button" className='option' value="색칠하기" onClick={gotoColorfill} />
         <input type="button" className='option' value="자유롭게" />
       </div>

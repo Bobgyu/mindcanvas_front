@@ -65,6 +65,52 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return distance;
 }
 
+// 상담센터 관련 키워드 필터링 함수
+const isCounselingRelated = (title, category, description) => {
+  // 상담센터 관련 키워드 (포함되어야 함)
+  const counselingKeywords = [
+    '상담', '심리', '정신', '치료', '클리닉', '센터', '의원', '병원',
+    '마음', '정신건강', '심리상담', '심리치료', '정신과', '정신건강복지',
+    '상담센터', '심리상담센터', '심리치료센터', '정신건강복지센터',
+    '심리클리닉', '마음상담센터', '정신과의원', '정신건강의학과',
+    '우울', '불안', '스트레스', '트라우마', '가족상담', '부부상담',
+    '청소년상담', '아동상담', '노인상담', '집단상담', '개인상담'
+  ];
+  
+  // 제외할 키워드 (포함되면 안됨)
+  const excludeKeywords = [
+    '카페', '커피', '음식점', '식당', '레스토랑', '패스트푸드',
+    '가죽', '공방', '수제', '핸드메이드', '공예', '만들기',
+    '미용', '헤어', '네일', '피부', '마사지', '스파',
+    '헬스', '피트니스', '요가', '필라테스', '운동',
+    '학원', '교육', '학습', '과외', '입시', '어학',
+    '쇼핑', '마트', '편의점', '백화점', '상점',
+    '호텔', '펜션', '모텔', '숙박', '여행',
+    '은행', '보험', '금융', '증권', '대출',
+    '자동차', '정비', '수리', '세차', '주유',
+    '부동산', '중개', '임대', '매매', '분양'
+  ];
+  
+  // 모든 텍스트를 소문자로 변환하여 검색
+  const textToCheck = `${title} ${category} ${description}`.toLowerCase();
+  
+  // 제외 키워드가 포함되어 있으면 false
+  for (const excludeKeyword of excludeKeywords) {
+    if (textToCheck.includes(excludeKeyword)) {
+      return false;
+    }
+  }
+  
+  // 상담센터 관련 키워드가 하나라도 포함되어 있으면 true
+  for (const counselingKeyword of counselingKeywords) {
+    if (textToCheck.includes(counselingKeyword)) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
 // 좌표를 주소로 변환 (Reverse Geocoding)
 const reverseGeocode = async (lat, lng) => {
   try {
@@ -91,15 +137,15 @@ const reverseGeocode = async (lat, lng) => {
   }
 }
 
-const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentLocation }) => {
+const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentLocation, autoSearchTriggered }) => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState('unknown'); // 'real', 'demo', 'error'
 
   useEffect(() => {
-    console.log('🔄 SearchResults useEffect 실행:', { searchTerm, currentLocation });
+    console.log('🔄 SearchResults useEffect 실행:', { searchTerm, currentLocation, autoSearchTriggered });
     
-    if (searchTerm) {
+    if (searchTerm || autoSearchTriggered) {
       setLoading(true);
       
       // 실제 네이버 검색 API 사용
@@ -115,11 +161,17 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
               console.log('📍 현재 위치를 주소로 변환 중...');
               const addressData = await reverseGeocode(currentLocation.lat, currentLocation.lng);
               if (addressData && addressData.address) {
-                // 구/동 단위로 검색 (예: "강남구 상담센터")
+                // 구/동 단위로 검색 (예: "강남구 심리상담센터")
                 const area2 = addressData.area2 || '';
                 const area3 = addressData.area3 || '';
-                const locationQuery = area3 ? `${area3} ${searchTerm}` : `${area2} ${searchTerm}`;
-                searchQuery = locationQuery;
+                // 자동 검색일 때는 상담센터 키워드 추가
+                if (!searchTerm) {
+                  const locationQuery = area3 ? `${area3} 심리상담센터` : `${area2} 심리상담센터`;
+                  searchQuery = locationQuery;
+                } else {
+                  const locationQuery = area3 ? `${area3} ${searchTerm}` : `${area2} ${searchTerm}`;
+                  searchQuery = locationQuery;
+                }
                 console.log('🏘️ 지역 기반 검색 쿼리:', searchQuery);
               } else {
                 console.log('⚠️ 주소 변환 실패, 일반 검색 수행');
@@ -140,13 +192,29 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
             setLoading(false);
             return;
           }
+
+          // 1.5단계: 프론트엔드에서 추가 필터링
+          console.log('🔍 필터링 전 검색 결과 상세:', searchResults.map(r => ({
+            title: r.title,
+            category: r.category,
+            description: r.description,
+            address: r.address,
+            is_counseling_related: r.is_counseling_related
+          })));
+          
+          const filteredResults = searchResults.filter(result => {
+            const isRelated = isCounselingRelated(result.title, result.category, result.description);
+            console.log(`🔍 "${result.title}" 프론트엔드 필터링 결과:`, isRelated, `(백엔드: ${result.is_counseling_related})`);
+            return isRelated;
+          });
+          console.log('🔍 필터링된 검색 결과:', filteredResults);
           
           // 2단계: 검색 결과에 좌표 정보 추가
           console.log('🗺️ 좌표 정보 추가 중...');
           const resultsWithCoords = await Promise.all(
-            searchResults.map(async (item, index) => {
+            filteredResults.map(async (item, index) => {
               try {
-                console.log(`📍 ${index + 1}/${searchResults.length} 좌표 변환 중:`, item.title);
+                console.log(`📍 ${index + 1}/${filteredResults.length} 좌표 변환 중:`, item.title);
                 
                 // 주소로 좌표 변환
                 const coords = await geocodeAddress(item.address);
@@ -189,9 +257,9 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           
           console.log('🎉 최종 검색 결과:', resultsWithCoords);
           // 현재 위치가 있을 때 5km 이내 필터링
-          let filteredResults = resultsWithCoords;
+          let finalResults = resultsWithCoords;
           if (currentLocation) {
-            filteredResults = resultsWithCoords.filter(result => {
+            finalResults = resultsWithCoords.filter(result => {
               if (!result.coords) return false;
               
               // 두 점 사이의 거리 계산 (Haversine 공식)
@@ -204,12 +272,12 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
             });
           }
 
-          setResults(filteredResults);
+          setResults(finalResults);
           setApiStatus('real');
           
           // 상위 컴포넌트에 결과 전달
           if (onResultsChange) {
-            onResultsChange(filteredResults);
+            onResultsChange(finalResults);
           }
           
         } catch (error) {
@@ -256,8 +324,8 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
       };
       
       performSearch();
-    } else {
-      // 검색어가 없을 때 상담센터 자동 검색
+    } else if (autoSearchTriggered) {
+      // 자동 검색 트리거가 있을 때 상담센터 자동 검색
       const searchCounselingCenters = async () => {
         console.log('🏥 상담센터 자동 검색 시작');
         console.log('📍 현재 위치 (자동 검색 시):', currentLocation);
@@ -266,7 +334,6 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           const counselingQueries = [
             '심리상담센터',
             '심리치료센터',
-            '정신건강복지센터',
             '상담센터',
             '정신과의원',
             '심리클리닉',
@@ -300,20 +367,28 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
               const searchData = await searchPlaces(searchQuery, 10);
               
               if (searchData && searchData.length > 0) {
+                console.log(`✅ ${query} 검색 결과 ${searchData.length}개 발견`);
                 allResults.push(...searchData);
+              } else {
+                console.log(`❌ ${query} 검색 결과 없음`);
               }
             } catch (error) {
               console.error(`${query} 검색 오류:`, error);
             }
           }
 
-          // 중복 제거 및 좌표 정보 추가
+          // 중복 제거 및 상담센터 관련 필터링
           const uniqueResults = allResults.filter((place, index, self) => 
             index === self.findIndex(p => p.title === place.title)
           );
 
+          // 상담센터 관련 키워드로 추가 필터링
+          const counselingResults = uniqueResults.filter(result => {
+            return isCounselingRelated(result.title, result.category, result.description);
+          });
+
           const resultsWithCoords = await Promise.all(
-            uniqueResults.slice(0, 15).map(async (item, index) => {
+            counselingResults.slice(0, 15).map(async (item, index) => {
               try {
                 const coords = await geocodeAddress(item.address);
                 return {
@@ -339,9 +414,9 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           );
 
           // 현재 위치가 있을 때 5km 이내 필터링
-          let filteredResults = resultsWithCoords;
+          let finalFilteredResults = resultsWithCoords;
           if (currentLocation) {
-            filteredResults = resultsWithCoords.filter(result => {
+            finalFilteredResults = resultsWithCoords.filter(result => {
               if (!result.coords) return false;
               
               // 두 점 사이의 거리 계산 (Haversine 공식)
@@ -354,11 +429,11 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
             });
           }
 
-          setResults(filteredResults);
+          setResults(finalFilteredResults);
           setApiStatus('real');
           
           if (onResultsChange) {
-            onResultsChange(resultsWithCoords);
+            onResultsChange(finalFilteredResults);
           }
         } catch (error) {
           console.error('상담센터 검색 오류:', error);
@@ -371,13 +446,13 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
 
       searchCounselingCenters();
     }
-  }, [searchTerm, currentLocation]);
+  }, [searchTerm, currentLocation, autoSearchTriggered]);
 
   const handleResultClick = (result) => {
     onLocationSelect(result);
   };
 
-  if (!searchTerm && !loading) {
+  if (!searchTerm && !autoSearchTriggered && !loading) {
     return (
       <div className="w-full h-full bg-gray-50 rounded-lg p-4">
         <p className="text-gray-500 text-center">상담센터를 검색하고 있습니다...</p>
@@ -410,9 +485,11 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           <div>
             <h3 className="font-semibold text-gray-800">검색결과</h3>
             <p className="text-sm text-gray-600">
-              {currentLocation 
-                ? `"${searchTerm}"에 대한 근처 심리상담센터 (5km 이내 ${results.length}개)`
-                : `"${searchTerm}"에 대한 ${results.length}개 결과`
+              {autoSearchTriggered && !searchTerm
+                ? `근처 심리상담센터 (5km 이내 ${results.length}개)`
+                : currentLocation 
+                  ? `"${searchTerm}"에 대한 근처 심리상담센터 (5km 이내 ${results.length}개)`
+                  : `"${searchTerm}"에 대한 ${results.length}개 결과`
               }
             </p>
           </div>
@@ -487,15 +564,19 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           <div className="p-4 text-center text-gray-500">
             <div className="text-4xl mb-2">🔍</div>
             <p>
-              {currentLocation 
-                ? '근처에 심리상담센터가 없습니다' 
-                : '검색 결과가 없습니다'
+              {autoSearchTriggered && !searchTerm
+                ? '근처에 심리상담센터가 없습니다'
+                : currentLocation 
+                  ? '근처에 심리상담센터가 없습니다' 
+                  : '검색 결과가 없습니다'
               }
             </p>
             <p className="text-sm mt-1">
-              {currentLocation 
-                ? '5km 이내에 심리상담센터를 찾을 수 없습니다. 더 넓은 범위로 검색해보세요.' 
-                : '다른 검색어를 시도해보세요'
+              {autoSearchTriggered && !searchTerm
+                ? '5km 이내에 심리상담센터를 찾을 수 없습니다. 더 넓은 범위로 검색해보세요.'
+                : currentLocation 
+                  ? '5km 이내에 심리상담센터를 찾을 수 없습니다. 더 넓은 범위로 검색해보세요.' 
+                  : '다른 검색어를 시도해보세요'
               }
             </p>
           </div>
