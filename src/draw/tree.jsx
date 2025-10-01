@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
+import axios from 'axios'
 
 function Tree() {
   const navigate = useNavigate()
@@ -86,54 +87,84 @@ function Tree() {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
   }
 
-  const saveDrawing = () => {
-    const canvas = canvasRef.current
-    const link = document.createElement('a')
-    link.download = '나무그리기.png'
-    link.href = canvas.toDataURL()
-    link.click()
-  }
+  const saveDrawingToBackend = async (imageData, analysisResult = null) => {
+    const userId = localStorage.getItem('userId'); // 로컬 스토리지에서 userId 가져오기
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      navigate('/login');
+      return false;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/drawings', {
+        user_id: parseInt(userId),
+        image: imageData,
+        analysis_result: analysisResult
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        alert("그림이 성공적으로 저장되었습니다!");
+        return true;
+      } else {
+        alert("그림 저장에 실패했습니다: " + response.data.error);
+        return false;
+      }
+    } catch (error) {
+      console.error("그림 저장 API 오류:", error);
+      alert("그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+      return false;
+    }
+  };
+
+  const saveDrawing = async () => {
+    const canvas = canvasRef.current;
+    const imageData = canvas.toDataURL('image/png');
+    await saveDrawingToBackend(imageData);
+  };
 
   const analyzeDrawing = async () => {
     try {
-      setIsAnalyzing(true)
-      const canvas = canvasRef.current
-      const imageData = canvas.toDataURL('image/png')
+      setIsAnalyzing(true);
+      const canvas = canvasRef.current;
+      const imageData = canvas.toDataURL('image/png');
       
       // 백엔드 API 호출 (Tree 모델 사용)
-      const response = await fetch('http://localhost:5000/api/predict/Tree', {
-        method: 'POST',
+      const analyzeResponse = await axios.post('http://localhost:5000/api/predict/Tree', {
+        image: imageData
+      }, {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: imageData
-        })
-      })
+        }
+      });
       
-      if (!response.ok) {
-        throw new Error('분석 요청에 실패했습니다.')
-      }
-      
-      const result = await response.json()
-      
-      if (result.success) {
-        // 그린 그림을 로컬 스토리지에 저장
-        localStorage.setItem('drawnTreeImage', imageData)
-        // 분석 결과를 로컬 스토리지에 저장
-        localStorage.setItem('treeAnalysisResult', JSON.stringify(result.detections))
-        // 분석 페이지로 이동
-        navigate('/draw/tree-analysis')
+      if (analyzeResponse.data.success) {
+        const analysisResult = analyzeResponse.data.detections; // Tree 모델은 detections를 반환
+        
+        // 분석 결과를 포함하여 그림 저장
+        const saved = await saveDrawingToBackend(imageData, analysisResult);
+        
+        if (saved) {
+          // 그린 그림을 로컬 스토리지에 저장
+          localStorage.setItem('drawnTreeImage', imageData);
+          // 분석 결과를 로컬 스토리지에 저장
+          localStorage.setItem('treeAnalysisResult', JSON.stringify(analysisResult));
+          // 분석 페이지로 이동
+          navigate('/draw/tree-analysis');
+        }
       } else {
-        alert('분석에 실패했습니다: ' + result.error)
+        alert('분석에 실패했습니다: ' + analyzeResponse.data.error);
       }
     } catch (error) {
-      console.error('분석 오류:', error)
-      alert('분석 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.')
+      console.error('분석 오류:', error);
+      alert('분석 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
     } finally {
-      setIsAnalyzing(false)
+      setIsAnalyzing(false);
     }
-  }
+  };
 
   const selectColor = (color) => {
     setBrushColor(color)

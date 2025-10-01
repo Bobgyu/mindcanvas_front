@@ -66,7 +66,6 @@ function MyGallery() {
                     <h3 className="font-semibold text-md mt-4 mb-2">분석 결과:</h3>
                     <p>총 점수: {drawing.analysis_result.total_score}</p>
                     <p>위험도: {drawing.analysis_result.risk_level}</p>
-                    {/* 더 상세한 분석 결과 표시 */}
                     {Object.entries(drawing.analysis_result.objects).map(([objType, objData]) => (
                       <div key={objType} className="mt-2">
                         <h4 className="font-medium text-sm">- {objData.label} (점수: {objData.score})</h4>

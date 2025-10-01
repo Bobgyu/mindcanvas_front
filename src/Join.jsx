@@ -84,8 +84,12 @@ function Join() {
       });
 
       if (response.status === 201) {
-        alert(response.data.message);
-        navigate('/login'); // 회원가입 성공 후 로그인 페이지로 이동
+          alert(response.data.message);
+          // 회원가입 성공 시 사용자 ID를 로컬 스토리지에 저장 (선택 사항)
+          if (response.data.user_id) {
+              localStorage.setItem('userId', response.data.user_id);
+          }
+          navigate('/login'); // 회원가입 성공 후 로그인 페이지로 이동
       }
     } catch (err) {
       if (err.response && err.response.data && err.response.data.error) {

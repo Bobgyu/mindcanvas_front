@@ -46,7 +46,8 @@ function Login() {
         } else {
           localStorage.removeItem('rememberedEmail');
         }
-        // TODO: 실제 사용자 정보 (예: 토큰)를 localStorage 또는 Context API에 저장
+        // 사용자 ID를 로컬 스토리지에 저장
+        localStorage.setItem('userId', response.data.user_id); 
         navigate('/mainpage'); // 로그인 성공 후 메인 페이지로 이동
       }
     } catch (err) {
