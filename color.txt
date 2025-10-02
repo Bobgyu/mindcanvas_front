@@ -1,6 +1,6 @@
-Primary: #20E2A7 (민트/브랜드 색)
+Primary: #30E8AB (민트/브랜드 색)
 
-Secondary: #C6F6D5 (연민트/코디네이터 말풍선)
+Secondary: #CEF4E7 (연민트/코디네이터 말풍선)
 
 Background: #F9FAF9 (채팅 배경)
 
