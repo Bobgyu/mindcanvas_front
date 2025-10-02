@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 
 function TreeAnalysis() {
   const navigate = useNavigate()
-  const [analysisResult, setAnalysisResult] = useState('')
   const [speechAnalysis, setSpeechAnalysis] = useState('')
   const [drawnImage, setDrawnImage] = useState(null)
   const [analyzedImage, setAnalyzedImage] = useState(null)
@@ -174,16 +173,15 @@ function TreeAnalysis() {
           resultText += '1. 훌륭한 나무 그림입니다! 더 창의적인 요소들을 추가해보세요.\n'
         }
         
-        setAnalysisResult(resultText)
         
         // 챗봇 분석 요청
         getChatbotAnalysis(parsedAnalysis)
       } catch (error) {
         console.error('분석 결과 파싱 오류:', error)
-        setAnalysisResult('분석 결과를 불러오는 중 오류가 발생했습니다.')
+        console.error('분석 결과를 불러오는 중 오류가 발생했습니다.')
       }
     } else {
-      setAnalysisResult('분석 결과가 없습니다. 먼저 나무를 그리고 분석해주세요.')
+      console.log('분석 결과가 없습니다. 먼저 나무를 그리고 분석해주세요.')
     }
   }, [])
 
@@ -343,40 +341,6 @@ function TreeAnalysis() {
           </div>
         </div>
 
-        {/* 분석결과 영역 */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '15px',
-          alignItems: 'center'
-        }}>
-          <h3 style={{
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#333',
-            margin: 0
-          }}>
-            나무 분석결과
-          </h3>
-          <div style={{
-            width: '90%',
-            maxWidth: '600px',
-            minHeight: '200px',
-            maxHeight: '300px',
-            border: '2px solid #000',
-            borderRadius: '10px',
-            padding: '15px',
-            backgroundColor: '#f9f9f9',
-            fontSize: '14px',
-            color: '#333',
-            whiteSpace: 'pre-line',
-            textAlign: 'left',
-            overflow: 'auto',
-            lineHeight: '1.5'
-          }}>
-            {analysisResult || '분석 결과가 여기에 표시됩니다.'}
-          </div>
-        </div>
 
         {/* 말하기 분석 영역 */}
         <div style={{
@@ -391,7 +355,7 @@ function TreeAnalysis() {
             color: '#333',
             margin: 0
           }}>
-            말하기 분석
+            AI 심리 분석
           </h3>
           <div style={{
             width: '90%',
@@ -451,7 +415,7 @@ function TreeAnalysis() {
                 <span>챗봇이 따뜻한 분석을 준비하고 있어요...</span>
               </div>
             ) : (
-              speechAnalysis || '말하기 분석 결과가 여기에 표시됩니다.'
+              speechAnalysis || 'AI가 따뜻한 심리 분석을 준비하고 있습니다...'
             )}
           </div>
         </div>
