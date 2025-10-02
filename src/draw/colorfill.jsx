@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function Colorfill() {
@@ -18,8 +18,38 @@ function Colorfill() {
 
   const [selectedImage, setSelectedImage] = useState(null)
 
+  // 토큰 검증 (로컬 검증)
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    // JWT 토큰을 로컬에서 검증
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      if (tokenData.exp < currentTime) {
+        // 토큰이 만료되었으면 로그인 페이지로
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        navigate('/login');
+        return;
+      }
+    } catch (error) {
+      // 토큰 파싱 오류 시 로그인 페이지로
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      navigate('/login');
+      return;
+    }
+  }, [navigate]);
+
   const goBack = () => {
-    navigate('/')
+    navigate('/mainpage')
   }
 
   const selectImage = (image) => {
@@ -95,7 +125,7 @@ function Colorfill() {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .colorfill-container {
           min-height: 100vh;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

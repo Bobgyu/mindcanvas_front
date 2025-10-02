@@ -1,89 +1,104 @@
-import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useRef, useState, useEffect } from 'react'
+import axios from 'axios'
 
 function Fillcanvas() {
   const navigate = useNavigate()
   const canvasRef = useRef(null)
-  const [selectedImage, setSelectedImage] = useState(null)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [brushSize, setBrushSize] = useState(10)
-  const [selectedColor, setSelectedColor] = useState('#ff6b6b')
-  const [showColorPicker, setShowColorPicker] = useState(false)
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 })
-  const [zoom, setZoom] = useState(1)
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
-  const [isPanning, setIsPanning] = useState(false)
-  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
-  const [currentTool, setCurrentTool] = useState('brush') // 'brush' 또는 'eraser'
-  const [originalImageData, setOriginalImageData] = useState(null)
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
-  const [showCursor, setShowCursor] = useState(false)
+  const [brushSize, setBrushSize] = useState(5)
+  const [brushColor, setBrushColor] = useState('#000000')
+  const [currentTool, setCurrentTool] = useState('brush')
+  const [showPalette, setShowPalette] = useState(false)
+  const [showBrushSize, setShowBrushSize] = useState(false)
+  const [customColor, setCustomColor] = useState('#000000')
+  const [showCustomColorPicker, setShowCustomColorPicker] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  // 색상 팔레트
-  const colorPalette = [
-    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
-    '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
-    '#10ac84', '#ee5a24', '#0984e3', '#6c5ce7', '#a29bfe',
-    '#fd79a8', '#fdcb6e', '#e17055', '#81ecec', '#74b9ff',
-    '#000000', '#ffffff', '#636e72', '#b2bec3', '#ddd'
-  ]
+  const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB']
+
+  // 토큰 검증 (로컬 검증)
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    // JWT 토큰을 로컬에서 검증
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      if (tokenData.exp < currentTime) {
+        // 토큰이 만료되었으면 로그인 페이지로
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        navigate('/login');
+        return;
+      }
+    } catch (error) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      navigate('/login');
+      return;
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // localStorage에서 선택된 이미지 정보 가져오기
     const savedImage = localStorage.getItem('selectedColorImage')
     if (savedImage) {
-      setSelectedImage(JSON.parse(savedImage))
+      const imageData = JSON.parse(savedImage)
+      setSelectedImage(imageData)
+      
+      // 이어서 그리기인 경우 기존 그림을 캔버스에 로드
+      if (imageData.isContinue) {
+        setTimeout(() => {
+          loadExistingDrawing(imageData)
+        }, 100)
+      }
     } else {
       // 이미지가 없으면 갤러리로 돌아가기
-      navigate('/draw/colorfill')
+      navigate('/mainpage')
     }
   }, [navigate])
 
-  useEffect(() => {
-    if (selectedImage) {
-      loadImageToCanvas()
-    }
-  }, [selectedImage])
-
-  const loadImageToCanvas = () => {
+  const loadExistingDrawing = (imageData) => {
     const canvas = canvasRef.current
+    if (!canvas) return
+
     const ctx = canvas.getContext('2d')
-    
     const img = new Image()
+    
     img.onload = () => {
-      // 캔버스 크기를 이미지에 맞게 조정
-      const maxWidth = 800
-      const maxHeight = 600
-      let { width, height } = img
+      // 캔버스 크기 설정
+      canvas.width = img.width
+      canvas.height = img.height
       
-      if (width > maxWidth || height > maxHeight) {
-        const ratio = Math.min(maxWidth / width, maxHeight / height)
-        width *= ratio
-        height *= ratio
-      }
-      
-      canvas.width = width
-      canvas.height = height
-      setCanvasSize({ width, height })
-      
-      // 이미지를 캔버스에 그리기
-      ctx.drawImage(img, 0, 0, width, height)
-      
-      // 원본 이미지 데이터 저장 (지우개 기능을 위해)
-      const imageData = ctx.getImageData(0, 0, width, height)
-      setOriginalImageData(imageData)
+      // 기존 그림을 캔버스에 그리기
+      ctx.drawImage(img, 0, 0)
     }
-    img.src = `/src/imgdata/colorimg/${selectedImage.filename}`
+    
+    img.src = imageData.image
+  }
+
+  const handleBack = () => {
+    navigate('/mainpage')
   }
 
   const startDrawing = (e) => {
-    if (e.button === 0) { // 왼쪽 마우스 버튼만 그리기
       setIsDrawing(true)
-      draw(e)
-    } else if (e.button === 1 || e.button === 2) { // 가운데 또는 오른쪽 버튼은 팬
-      setIsPanning(true)
-      setLastPanPoint({ x: e.clientX, y: e.clientY })
-    }
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const rect = canvas.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    ctx.beginPath()
+    ctx.moveTo(x, y)
   }
 
   const draw = (e) => {
@@ -92,78 +107,23 @@ function Fillcanvas() {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const rect = canvas.getBoundingClientRect()
-    
-    // 캔버스 내부 좌표로 변환 (줌과 팬 고려)
-    const x = (e.clientX - rect.left - panOffset.x) / zoom
-    const y = (e.clientY - rect.top - panOffset.y) / zoom
-
-    // 캔버스 경계 체크
-    if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) {
-      return
-    }
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
 
     if (currentTool === 'brush') {
-      // 브러시 모드
       ctx.globalCompositeOperation = 'source-over'
-      ctx.strokeStyle = selectedColor
       ctx.lineWidth = brushSize
       ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-
+      ctx.strokeStyle = brushColor
       ctx.lineTo(x, y)
       ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(x, y)
     } else if (currentTool === 'eraser') {
-      // 지우개 모드 - 원본 이미지로 복원
-      if (originalImageData) {
-        // 현재 캔버스의 이미지 데이터 가져오기
-        const currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        const currentData = currentImageData.data
-        const originalData = originalImageData.data
-        
-        // 지우개 영역의 픽셀들을 원본으로 복원
-        const radius = brushSize / 2
-        const startX = Math.max(0, Math.floor(x - radius))
-        const endX = Math.min(canvas.width, Math.ceil(x + radius))
-        const startY = Math.max(0, Math.floor(y - radius))
-        const endY = Math.min(canvas.height, Math.ceil(y + radius))
-        
-        for (let py = startY; py < endY; py++) {
-          for (let px = startX; px < endX; px++) {
-            const distance = Math.sqrt((px - x) ** 2 + (py - y) ** 2)
-            if (distance <= radius) {
-              const index = (py * canvas.width + px) * 4
-              // 원본 이미지의 픽셀 값으로 복원
-              currentData[index] = originalData[index]     // R
-              currentData[index + 1] = originalData[index + 1] // G
-              currentData[index + 2] = originalData[index + 2] // B
-              currentData[index + 3] = originalData[index + 3] // A
-            }
-          }
-        }
-        
-        // 수정된 이미지 데이터를 캔버스에 다시 그리기
-        ctx.putImageData(currentImageData, 0, 0)
-      }
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.lineWidth = brushSize * 2
+      ctx.lineCap = 'round'
+      ctx.lineTo(x, y)
+      ctx.stroke()
     }
-  }
-
-  const stopDrawing = () => {
-    if (isDrawing) {
-      setIsDrawing(false)
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')
-      ctx.beginPath()
-    }
-    if (isPanning) {
-      setIsPanning(false)
-    }
-  }
-
-  const handleMouseLeave = () => {
-    setShowCursor(false)
-    stopDrawing()
   }
 
   const handleMouseMove = (e) => {
@@ -172,161 +132,264 @@ function Fillcanvas() {
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     
-    // 커서 위치는 캔버스 내부 좌표로 설정 (draw 함수와 동일한 계산)
-    const canvasX = (x - panOffset.x) / zoom
-    const canvasY = (y - panOffset.y) / zoom
-    setCursorPos({ x: canvasX, y: canvasY })
+    setCursorPos({ x, y })
     setShowCursor(true)
-    
-    if (isPanning) {
-      const deltaX = e.clientX - lastPanPoint.x
-      const deltaY = e.clientY - lastPanPoint.y
-      setPanOffset(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }))
-      setLastPanPoint({ x: e.clientX, y: e.clientY })
-    } else if (isDrawing) {
       draw(e)
     }
+
+  const handleMouseLeave = () => {
+    setShowCursor(false)
+    stopDrawing()
   }
 
-  const handleWheel = (e) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? 0.9 : 1.1
-    const newZoom = Math.max(0.1, Math.min(5, zoom * delta))
-    setZoom(newZoom)
-  }
-
-  const resetZoom = () => {
-    setZoom(1)
-    setPanOffset({ x: 0, y: 0 })
-  }
-
-  const moveCanvas = (direction) => {
-    const moveDistance = 50
-    switch (direction) {
-      case 'up':
-        setPanOffset(prev => ({ ...prev, y: prev.y + moveDistance }))
-        break
-      case 'down':
-        setPanOffset(prev => ({ ...prev, y: prev.y - moveDistance }))
-        break
-      case 'left':
-        setPanOffset(prev => ({ ...prev, x: prev.x + moveDistance }))
-        break
-      case 'right':
-        setPanOffset(prev => ({ ...prev, x: prev.x - moveDistance }))
-        break
-    }
+  const stopDrawing = () => {
+    setIsDrawing(false)
   }
 
   const clearCanvas = () => {
-    if (selectedImage) {
-      loadImageToCanvas()
-      setZoom(1)
-      setPanOffset({ x: 0, y: 0 })
-      setCurrentTool('brush') // 초기화 시 브러시 모드로 전환
-    }
-  }
-
-  const saveCanvas = () => {
     const canvas = canvasRef.current
-    const link = document.createElement('a')
-    link.download = `${selectedImage.name}_colored.png`
-    link.href = canvas.toDataURL()
-    link.click()
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    // 배경색 다시 설정
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
   }
 
-  const goBack = () => {
-    navigate('/draw/colorfill')
+  const saveDrawingToBackend = async (imageData, analysisResult = null) => {
+    const userId = localStorage.getItem('userId'); // 로컬 스토리지에서 userId 가져오기
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      navigate('/login');
+      return false; // userId가 없으면 저장하지 않고 함수 종료
+    }
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/drawings', {
+        user_id: parseInt(userId),
+        image: imageData,
+        analysis_result: analysisResult
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        alert("그림이 성공적으로 저장되었습니다!");
+        return true;
+      } else {
+        alert("그림 저장에 실패했습니다: " + response.data.error);
+        return false;
+      }
+    } catch (error) {
+      console.error("그림 저장 API 오류:", error);
+      alert("그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+      return false;
+    }
+  };
+
+  const saveDrawing = async () => {
+    const canvas = canvasRef.current;
+    const imageData = canvas.toDataURL('image/png');
+    await saveDrawingToBackend(imageData);
+  };
+
+  const analyzeDrawing = async () => {
+    try {
+      setIsAnalyzing(true);
+      const canvas = canvasRef.current;
+      const imageData = canvas.toDataURL('image/png');
+      
+      // 백엔드 API 호출하여 분석
+      const analyzeResponse = await axios.post('http://localhost:5000/api/analyze', {
+        image: imageData
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (analyzeResponse.data.success) {
+        const analysisResult = analyzeResponse.data.analysis;
+        
+        // 기존 그림을 분석된 그림으로 업데이트
+        const userId = localStorage.getItem('userId');
+        if (selectedImage && selectedImage.id) {
+          try {
+            // 기존 그림을 분석 결과와 함께 업데이트
+            const updateResponse = await axios.put(`http://localhost:5000/api/drawings/${selectedImage.id}`, {
+              image: imageData,
+              analysis_result: analysisResult
+            }, {
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            if (updateResponse.data.success) {
+              alert('그림이 분석되어 업데이트되었습니다!');
+              // 분석 결과를 로컬 스토리지에 저장
+              localStorage.setItem('drawnImage', imageData);
+              localStorage.setItem('analysisResult', JSON.stringify(analysisResult));
+              // 분석 페이지로 이동
+              navigate('/draw/analysis');
+            } else {
+              // 업데이트 실패 시 새로 저장
+              const saved = await saveDrawingToBackend(imageData, analysisResult);
+              if (saved) {
+                alert('그림이 분석되어 저장되었습니다!');
+                // 분석 결과를 로컬 스토리지에 저장
+                localStorage.setItem('drawnImage', imageData);
+                localStorage.setItem('analysisResult', JSON.stringify(analysisResult));
+                // 분석 페이지로 이동
+                navigate('/draw/analysis');
+              }
+            }
+          } catch (updateError) {
+            console.error('그림 업데이트 오류:', updateError);
+            // 업데이트 실패 시 새로 저장
+            const saved = await saveDrawingToBackend(imageData, analysisResult);
+            if (saved) {
+              alert('그림이 분석되어 저장되었습니다!');
+              // 분석 결과를 로컬 스토리지에 저장
+              localStorage.setItem('drawnImage', imageData);
+              localStorage.setItem('analysisResult', JSON.stringify(analysisResult));
+              // 분석 페이지로 이동
+              navigate('/draw/analysis');
+            }
+          }
+        } else {
+          // 새 그림으로 저장
+          const saved = await saveDrawingToBackend(imageData, analysisResult);
+          if (saved) {
+            alert('그림이 분석되어 저장되었습니다!');
+            // 분석 결과를 로컬 스토리지에 저장
+            localStorage.setItem('drawnImage', imageData);
+            localStorage.setItem('analysisResult', JSON.stringify(analysisResult));
+            // 분석 페이지로 이동
+            navigate('/draw/analysis');
+          }
+        }
+      } else {
+        alert('분석에 실패했습니다: ' + analyzeResponse.data.error);
+      }
+    } catch (error) {
+      console.error('분석 오류:', error);
+      alert('분석 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const selectColor = (color) => {
+    setBrushColor(color)
+    setShowPalette(false)
   }
 
-  if (!selectedImage) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>이미지를 불러오는 중...</p>
-      </div>
-    )
+  const addCustomColor = () => {
+    setBrushColor(customColor)
+    setShowCustomColorPicker(false)
+    setShowPalette(false)
   }
+
+  const selectBrushSize = (size) => {
+    setBrushSize(size)
+    setShowBrushSize(false)
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    
+    // 캔버스 크기 설정 (더 크게)
+    canvas.width = 400
+    canvas.height = 680
+    
+    // 배경색 설정
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // 기본 설정
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+  }, [])
+
+  // 도구별 커서 스타일 생성
+  const getCursorStyle = () => {
+    if (currentTool === 'eraser') {
+      return { cursor: 'crosshair' }
+    } else if (currentTool === 'brush') {
+      return { cursor: 'crosshair' }
+    }
+    return { cursor: 'crosshair' }
+  }
+
+  // 커서 위치 추적을 위한 상태
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
+  const [showCursor, setShowCursor] = useState(false)
 
   return (
-    <div className="fillcanvas-container">
-      <div className="canvas-header">
-        <div className="header-left">
-          <button className="back-button" onClick={goBack}>
-            ← 뒤로가기
-          </button>
-          <h1>{selectedImage.name} 색칠하기</h1>
-        </div>
-        
-        <div className="header-center">
-          <div className="zoom-controls">
-            <button className="zoom-button" onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}>
-              -
-            </button>
-            <span className="zoom-display">{Math.round(zoom * 100)}%</span>
-            <button className="zoom-button" onClick={() => setZoom(Math.min(5, zoom + 0.1))}>
-              +
-            </button>
-            <button className="zoom-button reset" onClick={resetZoom}>
-              리셋
+    <>
+      {/* 상단 저장 버튼 */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '20px', 
+        right: '20px', 
+        zIndex: 10 
+      }}>
+        <button 
+          onClick={saveDrawing}
+          style={{ 
+            padding: '10px 20px', 
+            backgroundColor: '#3a9d1f', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '20px', 
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          저장하기
             </button>
           </div>
           
-          {zoom > 1 && (
-            <div className="navigation-controls">
-              <button className="nav-button" onClick={() => moveCanvas('up')} title="위로 이동">
-                ↑
-              </button>
-              <div className="nav-row">
-                <button className="nav-button" onClick={() => moveCanvas('left')} title="왼쪽으로 이동">
-                  ←
-                </button>
-                <button className="nav-button" onClick={() => moveCanvas('right')} title="오른쪽으로 이동">
-                  →
-                </button>
-              </div>
-              <button className="nav-button" onClick={() => moveCanvas('down')} title="아래로 이동">
-                ↓
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="header-right">
-          <button className="action-button clear" onClick={clearCanvas}>
-            초기화
-          </button>
-          <button className="action-button save" onClick={saveCanvas}>
-            저장
-          </button>
-        </div>
+      {/* 뒤로가기 */}
+      <div className='goback'>
+        <p onClick={handleBack} style={{ cursor: 'pointer' }}>뒤로가기</p>
       </div>
 
-      <div className="canvas-workspace">
-        <div className="canvas-container">
-          <div 
-            className="canvas-wrapper"
-            style={{
-              transform: `scale(${zoom}) translate(${panOffset.x / zoom}px, ${panOffset.y / zoom}px)`,
-              transformOrigin: 'center center'
-            }}
-          >
+      {/* 메인 그리기 영역 */}
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        padding: '20px',
+        minHeight: '100vh',
+        boxSizing: 'border-box',
+        position: 'relative'
+      }}>
+        {/* 캔버스 */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          marginBottom: '30px',
+          marginTop: '60px',
+          position: 'relative'
+        }}>
             <canvas
               ref={canvasRef}
-              className="drawing-canvas"
               onMouseDown={startDrawing}
               onMouseMove={handleMouseMove}
               onMouseUp={stopDrawing}
               onMouseLeave={handleMouseLeave}
-              onWheel={handleWheel}
-              onContextMenu={(e) => e.preventDefault()}
               style={{
-                width: canvasSize.width,
-                height: canvasSize.height,
-                cursor: 'none'
+              border: '1px solid #000',
+              borderRadius: '10px',
+              cursor: 'none',
+              backgroundColor: 'white',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
               }}
             />
             
@@ -335,12 +398,12 @@ function Fillcanvas() {
               <div
                 style={{
                   position: 'absolute',
-                  left: cursorPos.x - brushSize / 2,
-                  top: cursorPos.y - brushSize / 2,
-                  width: brushSize,
-                  height: brushSize,
+                left: cursorPos.x - brushSize,
+                top: cursorPos.y - brushSize,
+                width: brushSize * 2,
+                height: brushSize * 2,
                   borderRadius: currentTool === 'eraser' ? '0%' : '50%',
-                  border: `2px solid ${currentTool === 'eraser' ? 'red' : selectedColor}`,
+                border: `2px solid ${currentTool === 'eraser' ? 'red' : brushColor}`,
                   backgroundColor: 'transparent',
                   pointerEvents: 'none',
                   zIndex: 10,
@@ -348,459 +411,252 @@ function Fillcanvas() {
                 }}
               />
             )}
-          </div>
-        </div>
+          
       </div>
 
-      <div className="toolbar">
-        <div className="tool-section">
-          <h3>도구 선택</h3>
-          <div className="tool-buttons">
+        {/* 하단 도구 바 - 고정 위치 */}
+        <div style={{ 
+          position: 'fixed',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: '15px', 
+          alignItems: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '15px 20px',
+          borderRadius: '25px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+          zIndex: 100
+        }}>
+          {/* 붓 버튼 */}
             <button
-              className={`tool-button ${currentTool === 'brush' ? 'active' : ''}`}
               onClick={() => setCurrentTool('brush')}
-            >
-              🖌️ 브러시
+            style={{ 
+              width: '50px', 
+              height: '50px', 
+              borderRadius: '50%', 
+              border: currentTool === 'brush' ? '3px solid #3a9d1f' : '1px solid #ccc',
+              backgroundColor: currentTool === 'brush' ? '#e8f5e8' : 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}
+          >
+            붓
             </button>
+          
+          {/* 지우개 버튼 */}
             <button
-              className={`tool-button ${currentTool === 'eraser' ? 'active' : ''}`}
               onClick={() => setCurrentTool('eraser')}
+            style={{ 
+              width: '50px', 
+              height: '50px', 
+              borderRadius: '50%', 
+              border: currentTool === 'eraser' ? '3px solid #3a9d1f' : '1px solid #ccc',
+              backgroundColor: currentTool === 'eraser' ? '#e8f5e8' : 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}
+          >
+            지우개
+          </button>
+          
+          {/* 팔레트 버튼 */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowPalette(!showPalette)}
+              style={{ 
+                width: '50px', 
+                height: '50px', 
+                borderRadius: '50%', 
+                border: '1px solid #ccc',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+              }}
             >
-              🧽 지우개
+              팔레트
             </button>
+            
+            {/* 팔레트 드롭다운 */}
+            {showPalette && (
+              <div style={{
+                position: 'absolute',
+                bottom: '70px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '10px',
+                padding: '15px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                zIndex: 200,
+                minWidth: '240px',
+                maxWidth: '280px'
+              }}>
+                {/* 기본 색상들 */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(5, 1fr)', 
+                  gap: '8px',
+                  justifyItems: 'center'
+                }}>
+                  {colors.map((color, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectColor(color)}
+                      style={{
+                        width: '35px',
+                        height: '35px',
+                        backgroundColor: color,
+                        border: brushColor === color ? '3px solid #3a9d1f' : '2px solid #ddd',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = 'scale(1.1)'
+                        e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'scale(1)'
+                        e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                {/* 구분선 */}
+                <div style={{ 
+                  height: '1px', 
+                  backgroundColor: '#eee', 
+                  margin: '5px 0' 
+                }} />
+                
+                {/* 사용자 지정 색상 */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '12px',
+                  justifyContent: 'center'
+                }}>
+                  <input
+                    type="color"
+                    value={customColor}
+                    onChange={(e) => setCustomColor(e.target.value)}
+                    style={{
+                      width: '45px',
+                      height: '35px',
+                      border: '2px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <button
+                    onClick={addCustomColor}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#3a9d1f',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#338a1a'
+                      e.target.style.transform = 'translateY(-1px)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = '#3a9d1f'
+                      e.target.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+          
+          {/* 분석 버튼 */}
+          <button 
+            onClick={analyzeDrawing}
+            disabled={isAnalyzing}
+            style={{ 
+              width: '50px', 
+              height: '50px', 
+              borderRadius: '50%', 
+              border: '1px solid #ccc',
+              backgroundColor: isAnalyzing ? '#f0f0f0' : 'white',
+              cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              opacity: isAnalyzing ? 0.6 : 1
+            }}
+          >
+            {isAnalyzing ? '분석중...' : '분석'}
+          </button>
         </div>
 
-        <div className="tool-section">
-          <h3>브러시 크기</h3>
+        {/* 브러시 크기 표시 - 상단에 배치 */}
+        <div style={{ 
+          position: 'fixed',
+          top: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontSize: '12px', 
+          color: '#666',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '8px 15px',
+          borderRadius: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          zIndex: 100
+        }}>
+          <span>브러시: {brushSize}px</span>
           <input
             type="range"
             min="1"
-            max="50"
+            max="20" 
             value={brushSize}
-            onChange={(e) => setBrushSize(parseInt(e.target.value))}
-            className="brush-slider"
+            onChange={(e) => setBrushSize(e.target.value)}
+            style={{ width: '80px' }}
           />
-          <span className="brush-size-display">{brushSize}px</span>
         </div>
 
-        <div className="tool-section">
-          <h3>색상 선택</h3>
-          <div className="color-palette">
-            {colorPalette.map((color, index) => (
-              <button
-                key={index}
-                className={`color-button ${selectedColor === color ? 'active' : ''}`}
-                style={{ backgroundColor: color }}
-                onClick={() => setSelectedColor(color)}
-              />
-            ))}
-          </div>
-          <button
-            className="custom-color-button"
-            onClick={() => setShowColorPicker(!showColorPicker)}
-          >
-            사용자 정의 색상
-          </button>
-          {showColorPicker && (
-            <input
-              type="color"
-              value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
-              className="color-picker"
-            />
-          )}
-        </div>
       </div>
-
-      <style jsx>{`
-        .fillcanvas-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
-        }
-
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          min-height: 100vh;
-          color: white;
-        }
-
-        .loading-spinner {
-          width: 50px;
-          height: 50px;
-          border: 5px solid rgba(255, 255, 255, 0.3);
-          border-top: 5px solid white;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .canvas-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 20px;
-          color: white;
-          padding: 0 20px;
-        }
-
-        .header-left {
-          display: flex;
-          align-items: center;
-          gap: 20px;
-        }
-
-        .header-center {
-          display: flex;
-          align-items: center;
-        }
-
-        .header-right {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .back-button {
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          padding: 10px 20px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-          white-space: nowrap;
-        }
-
-        .back-button:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateX(-5px);
-        }
-
-        .canvas-header h1 {
-          font-size: 1.8rem;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-          margin: 0;
-          white-space: nowrap;
-        }
-
-        .zoom-controls {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: rgba(255, 255, 255, 0.2);
-          padding: 8px 12px;
-          border-radius: 20px;
-        }
-
-        .zoom-button {
-          background: rgba(255, 255, 255, 0.3);
-          border: none;
-          color: white;
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-        }
-
-        .zoom-button:hover {
-          background: rgba(255, 255, 255, 0.5);
-          transform: scale(1.1);
-        }
-
-        .zoom-button.reset {
-          width: auto;
-          padding: 0 12px;
-          border-radius: 15px;
-          font-size: 12px;
-        }
-
-        .zoom-display {
-          color: white;
-          font-weight: bold;
-          min-width: 50px;
-          text-align: center;
-        }
-
-        .navigation-controls {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 5px;
-          margin-left: 20px;
-        }
-
-        .nav-row {
-          display: flex;
-          gap: 10px;
-        }
-
-        .nav-button {
-          background: rgba(255, 255, 255, 0.3);
-          border: none;
-          color: white;
-          width: 35px;
-          height: 35px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 18px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .nav-button:hover {
-          background: rgba(255, 255, 255, 0.5);
-          transform: scale(1.1);
-        }
-
-        .action-button {
-          padding: 10px 20px;
-          border: none;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .action-button.clear {
-          background: #ff6b6b;
-          color: white;
-        }
-
-        .action-button.clear:hover {
-          background: #ff5252;
-          transform: scale(1.05);
-        }
-
-        .action-button.save {
-          background: #4CAF50;
-          color: white;
-        }
-
-        .action-button.save:hover {
-          background: #45a049;
-          transform: scale(1.05);
-        }
-
-        .canvas-workspace {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          max-width: 1200px;
-          margin: 0 auto 20px auto;
-          min-height: 400px;
-        }
-
-        .toolbar {
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 15px;
-          padding: 20px;
-          max-width: 1200px;
-          margin: 0 auto;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .tool-section {
-          margin-bottom: 25px;
-        }
-
-        .toolbar .tool-section:last-child {
-          margin-bottom: 0;
-        }
-
-        .tool-section h3 {
-          margin: 0 0 15px 0;
-          color: #333;
-          font-size: 1.1rem;
-        }
-
-        .tool-buttons {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-
-        .tool-button {
-          flex: 1;
-          padding: 12px 16px;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          background: white;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-        }
-
-        .tool-button:hover {
-          border-color: #4CAF50;
-          background: #f0f8f0;
-        }
-
-        .tool-button.active {
-          border-color: #4CAF50;
-          background: #4CAF50;
-          color: white;
-        }
-
-        .tool-button.active:hover {
-          background: #45a049;
-        }
-
-        .brush-slider {
-          width: 100%;
-          margin-bottom: 10px;
-        }
-
-        .brush-size-display {
-          display: block;
-          text-align: center;
-          color: #666;
-          font-weight: bold;
-        }
-
-        .color-palette {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 8px;
-          margin-bottom: 15px;
-        }
-
-        .color-button {
-          width: 35px;
-          height: 35px;
-          border: 3px solid transparent;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .color-button:hover {
-          transform: scale(1.1);
-        }
-
-        .color-button.active {
-          border-color: #333;
-          transform: scale(1.2);
-        }
-
-        .custom-color-button {
-          width: 100%;
-          padding: 10px;
-          background: #f0f0f0;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.3s ease;
-        }
-
-        .custom-color-button:hover {
-          background: #e0e0e0;
-        }
-
-        .color-picker {
-          width: 100%;
-          height: 40px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          margin-top: 10px;
-        }
-
-        .canvas-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 15px;
-          padding: 20px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-          overflow: hidden;
-          position: relative;
-          width: 100%;
-          height: 500px;
-        }
-
-        .canvas-wrapper {
-          transition: transform 0.1s ease;
-        }
-
-        .drawing-canvas {
-          border: 2px solid #ddd;
-          border-radius: 10px;
-          cursor: crosshair;
-          background: white;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-          display: block;
-        }
-
-        .drawing-canvas:active {
-          cursor: grabbing;
-        }
-
-        @media (max-width: 768px) {
-          .canvas-workspace {
-            min-height: 300px;
-          }
-
-          .canvas-container {
-            height: 400px;
-          }
-
-          .canvas-header {
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
-            padding: 0 10px;
-          }
-
-          .header-left {
-            flex-direction: column;
-            gap: 10px;
-          }
-
-          .header-right {
-            flex-direction: column;
-            gap: 10px;
-          }
-
-          .canvas-header h1 {
-            font-size: 1.5rem;
-          }
-
-          .back-button {
-            position: relative;
-            left: auto;
-            top: auto;
-          }
-
-          .toolbar {
-            margin: 0 10px;
-          }
-        }
-      `}</style>
-    </div>
+    </>
   )
 }
 

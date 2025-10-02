@@ -19,9 +19,53 @@ function Login() {
       setSelectedDomain(domainPart || 'gmail.com');
       setRememberMe(true);
     }
-    // TODO: 실제 로그인 상태 (토큰 등)를 확인하는 로직 추가
-    // 예: 백엔드에 /api/current_user 요청하여 유효성 검사
+    
+    // 토큰이 있는지 확인하고 자동 로그인 처리 (로컬 검증)
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // JWT 토큰을 로컬에서 검증 (서버 호출 없이)
+      try {
+        const tokenData = JSON.parse(atob(token.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        if (tokenData.exp > currentTime) {
+          // 토큰이 유효하면 바로 메인 페이지로 이동
+          navigate('/mainpage');
+        } else {
+          // 토큰이 만료되었으면 제거
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('username');
+        }
+      } catch (error) {
+        // 토큰 파싱 오류 시 제거
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+      }
+    }
   }, []);
+
+  // 토큰 검증 및 자동 로그인
+  const verifyTokenAndLogin = async (token) => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/verify-token', {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 200) {
+        // 토큰이 유효하면 자동으로 메인 페이지로 이동
+        navigate('/mainpage');
+      }
+    } catch (err) {
+      // 토큰이 유효하지 않으면 로컬 스토리지에서 제거
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+    }
+  };
 
   const handleLogin = async () => {
     setError(''); // 오류 메시지 초기화
@@ -40,14 +84,19 @@ function Login() {
       if (response.status === 200) {
         // 로그인 성공 시 처리
         alert(response.data.message);
+        
+        // JWT 토큰과 사용자 정보를 로컬 스토리지에 저장
+        localStorage.setItem('authToken', response.data.token);
+        localStorage.setItem('userId', response.data.user_id);
+        localStorage.setItem('username', response.data.username);
+        
         // 로그인 유지 옵션에 따라 이메일 저장
         if (rememberMe) {
           localStorage.setItem('rememberedEmail', fullEmail);
         } else {
           localStorage.removeItem('rememberedEmail');
         }
-        // 사용자 ID를 로컬 스토리지에 저장
-        localStorage.setItem('userId', response.data.user_id); 
+        
         navigate('/mainpage'); // 로그인 성공 후 메인 페이지로 이동
       }
     } catch (err) {
