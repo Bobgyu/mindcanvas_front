@@ -14,6 +14,7 @@ function Tree() {
   const [customColor, setCustomColor] = useState('#000000')
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false)
 
   const colors = ['#000000', '#8B4513', '#228B22', '#32CD32', '#FFD700', '#FFA500', '#FF6347', '#87CEEB', '#DDA0DD', '#F0E68C']
 
@@ -126,7 +127,12 @@ function Tree() {
     await saveDrawingToBackend(imageData);
   };
 
-  const analyzeDrawing = async () => {
+  const handleAnalysisClick = () => {
+    setShowAnalysisModal(true);
+  };
+
+  const confirmAnalysis = async () => {
+    setShowAnalysisModal(false);
     try {
       setIsAnalyzing(true);
       const canvas = canvasRef.current;
@@ -164,6 +170,10 @@ function Tree() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const cancelAnalysis = () => {
+    setShowAnalysisModal(false);
   };
 
   const selectColor = (color) => {
@@ -322,7 +332,7 @@ function Tree() {
           justifyContent: 'center', 
           gap: '15px', 
           alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backgroundColor: 'rgb(39, 192, 141)',
           padding: '15px 20px',
           borderRadius: '25px',
           boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -346,7 +356,7 @@ function Tree() {
               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
             }}
           >
-            붓
+            <img src="/src/imgdata/icon/PAINTBRUSH.png" alt="붓" style={{ width: '32px', height: '32px' }} />
           </button>
           
           {/* 지우개 버튼 */}
@@ -367,7 +377,7 @@ function Tree() {
               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
             }}
           >
-            지우개
+            <img src="/src/imgdata/icon/eraser.png" alt="지우개" style={{ width: '32px', height: '32px' }} />
           </button>
           
           {/* 팔레트 버튼 */}
@@ -379,7 +389,7 @@ function Tree() {
                 height: '50px', 
                 borderRadius: '50%', 
                 border: '1px solid #ccc',
-                backgroundColor: '#CEF4E7',
+                backgroundColor: '#F9FAF9',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -389,7 +399,7 @@ function Tree() {
                 boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
               }}
             >
-              팔레트
+              <img src="/src/imgdata/icon/PALLETE.png" alt="팔레트" style={{ width: '32px', height: '32px' }} />
             </button>
             
             {/* 팔레트 드롭다운 */}
@@ -399,7 +409,7 @@ function Tree() {
                 bottom: '70px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                backgroundColor: '#CEF4E7',
+                backgroundColor: '#F9FAF9',
                 border: '1px solid #ccc',
                 borderRadius: '10px',
                 padding: '15px',
@@ -503,7 +513,7 @@ function Tree() {
           
           {/* 분석 버튼 */}
           <button 
-            onClick={analyzeDrawing}
+            onClick={handleAnalysisClick}
             disabled={isAnalyzing}
             style={{ 
               width: '50px', 
@@ -521,7 +531,7 @@ function Tree() {
               opacity: isAnalyzing ? 0.6 : 1
             }}
           >
-            {isAnalyzing ? '분석중...' : '분석'}
+            <img src="/src/imgdata/icon/IDEA.png" alt="분석" style={{ width: '32px', height: '32px' }} />
           </button>
         </div>
         
@@ -552,6 +562,86 @@ function Tree() {
             style={{ width: '80px' }}
           />
         </div>
+
+        {/* 분석 확인 모달 */}
+        {showAnalysisModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              borderRadius: '15px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              textAlign: 'center',
+              maxWidth: '400px',
+              width: '90%'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                marginBottom: '20px',
+                color: '#333'
+              }}>
+                분석을 실시하시겠습니까?
+              </h3>
+              <p style={{
+                fontSize: '14px',
+                color: '#666',
+                marginBottom: '25px',
+                lineHeight: '1.5'
+              }}>
+                그림을 분석하여 심리 상태를 확인할 수 있습니다.
+              </p>
+              <div style={{
+                display: 'flex',
+                gap: '15px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={cancelAnalysis}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmAnalysis}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: 'rgb(39, 192, 141)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  분석하기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   )
