@@ -8,30 +8,41 @@ function MyGallery() {
   const [selectedDrawing, setSelectedDrawing] = useState(null);
   const navigate = useNavigate();
 
-  // localStorage에서 실제 사용자 ID 가져오기
-  const userId = localStorage.getItem('userId');
-
   useEffect(() => {
     const fetchDrawings = async () => {
-      if (!userId) {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
         setError('로그인이 필요합니다.');
         navigate('/login');
         return;
       }
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/drawings/${userId}`);
+        const response = await axios.get('http://localhost:5000/api/drawings', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         if (response.data.success) {
           setDrawings(response.data.drawings);
         }
       } catch (err) {
         console.error("그림 가져오기 오류:", err);
-        setError('그림을 가져오는 중 오류가 발생했습니다.');
+        if (err.response?.status === 401) {
+          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('username');
+          navigate('/login');
+        } else {
+          setError('그림을 가져오는 중 오류가 발생했습니다.');
+        }
       }
     };
 
     fetchDrawings();
-  }, [userId, navigate]);
+  }, [navigate]);
 
   const handleThumbnailClick = (drawing) => {
     // 분석된 그림이면 상세보기, 아니면 이어서 그리기
@@ -53,8 +64,74 @@ function MyGallery() {
     setSelectedDrawing(null);
   };
 
+  const handleDeleteDrawing = async (drawingId) => {
+    if (!window.confirm('정말로 이 그림을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.delete(`http://localhost:5000/api/drawings/${drawingId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.data.success) {
+        alert('그림이 삭제되었습니다.');
+        // 목록 새로고침
+        const fetchDrawings = async () => {
+          const token = localStorage.getItem('authToken');
+          if (!token) {
+            setError('로그인이 필요합니다.');
+            navigate('/login');
+            return;
+          }
+
+          try {
+            const response = await axios.get('http://localhost:5000/api/drawings', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            if (response.data.success) {
+              setDrawings(response.data.drawings);
+            }
+          } catch (err) {
+            console.error("그림 가져오기 오류:", err);
+            if (err.response?.status === 401) {
+              alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('userId');
+              localStorage.removeItem('username');
+              navigate('/login');
+            } else {
+              setError('그림을 가져오는 중 오류가 발생했습니다.');
+            }
+          }
+        };
+        fetchDrawings();
+      } else {
+        alert('그림 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('그림 삭제 오류:', error);
+      if (error.response?.status === 401) {
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        navigate('/login');
+      } else {
+        alert('그림 삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
   return (
-    <div className="w-[29rem] h-[58rem] rounded-3xl bg-white flex flex-col">
+    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
       <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
         <button className="text-gray-600" onClick={() => navigate('/mypage')}>
           <svg
@@ -116,14 +193,22 @@ function MyGallery() {
             <div className="bg-white rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">그림 상세보기</h2>
-                <button 
-                  onClick={closeDetail}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleDeleteDrawing(selectedDrawing.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600 transition-colors"
+                  >
+                    삭제
+                  </button>
+                  <button 
+                    onClick={closeDetail}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               
               <img 

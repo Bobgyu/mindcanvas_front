@@ -41,7 +41,7 @@ function MyPage() {
     <>
     <div className='upper-options'>
       <input type="button" className='upper-option' value="내 그림(작품) 보기 (+분석결과)" onClick={() => navigate('/mypage/gallery')} />
-      <input type="button" className='upper-option' value="마음일기 보기" />
+      <input type="button" className='upper-option' value="마음일기 보기" onClick={() => navigate('/diary/list')} />
       <input type="button" className='upper-option' value="마음코디네이터" onClick={handleCoordinator}/>
       <input type="button" className='upper-option' value="정보변경" />
       <input type="button" className='upper-option' value="공지사항" />
