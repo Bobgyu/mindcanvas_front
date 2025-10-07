@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 function Fillcanvas() {
   const navigate = useNavigate()
@@ -32,7 +33,8 @@ function Fillcanvas() {
     // localStorage에서 선택된 이미지 정보 가져오기
     const savedImage = localStorage.getItem('selectedColorImage')
     if (savedImage) {
-      setSelectedImage(JSON.parse(savedImage))
+      const imageData = JSON.parse(savedImage)
+      setSelectedImage(imageData)
     } else {
       // 이미지가 없으면 갤러리로 돌아가기
       navigate('/draw/colorfill')
@@ -41,7 +43,12 @@ function Fillcanvas() {
 
   useEffect(() => {
     if (selectedImage) {
-      loadImageToCanvas()
+      // 이어서 색칠하기인 경우 기존 색칠 데이터 로드
+      if (selectedImage.isContinue && selectedImage.coloredImage) {
+        loadColoredImage(selectedImage.coloredImage)
+      } else {
+        loadImageToCanvas()
+      }
     }
   }, [selectedImage])
 
@@ -74,6 +81,66 @@ function Fillcanvas() {
       setOriginalImageData(imageData)
     }
     img.src = `/src/imgdata/colorimg/${selectedImage.filename}`
+  }
+
+  const loadColoredImage = (coloredImageData) => {
+    if (!coloredImageData) {
+      console.error('색칠 이미지 데이터가 없습니다.')
+      return
+    }
+    
+    const canvas = canvasRef.current
+    if (!canvas) {
+      console.error('캔버스가 아직 준비되지 않았습니다.')
+      return
+    }
+    
+    const ctx = canvas.getContext('2d')
+    
+    // 먼저 원본 이미지를 로드
+    const originalImg = new Image()
+    originalImg.onload = () => {
+      // 캔버스 크기를 이미지에 맞게 조정
+      const maxWidth = 800
+      const maxHeight = 600
+      let { width, height } = originalImg
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height)
+        width *= ratio
+        height *= ratio
+      }
+      
+      canvas.width = width
+      canvas.height = height
+      setCanvasSize({ width, height })
+      
+      // 원본 이미지를 캔버스에 그리기 (선만 있는 상태)
+      ctx.drawImage(originalImg, 0, 0, width, height)
+      
+      // 원본 이미지 데이터를 저장 (지우개 기능을 위해) - 색칠하기 전에 저장
+      const originalImageData = ctx.getImageData(0, 0, width, height)
+      setOriginalImageData(originalImageData)
+      
+      // 그 다음 색칠된 이미지를 로드
+      const coloredImg = new Image()
+      coloredImg.onload = () => {
+        try {
+          // 색칠된 이미지를 캔버스에 그리기
+          ctx.drawImage(coloredImg, 0, 0, width, height)
+        } catch (error) {
+          console.error('색칠 이미지 로드 중 오류:', error)
+        }
+      }
+      coloredImg.onerror = () => {
+        console.error('색칠 이미지 로드 실패')
+      }
+      coloredImg.src = coloredImageData
+    }
+    originalImg.onerror = () => {
+      console.error('원본 이미지 로드 실패')
+    }
+    originalImg.src = `/src/imgdata/colorimg/${selectedImage.filename}`
   }
 
   const startDrawing = (e) => {
@@ -223,14 +290,80 @@ function Fillcanvas() {
 
   const clearCanvas = () => {
     if (selectedImage) {
-      loadImageToCanvas()
+      // 이어서 색칠하기인 경우 기존 색칠 데이터로 초기화
+      if (selectedImage.isContinue && selectedImage.coloredImage) {
+        loadColoredImage(selectedImage.coloredImage)
+      } else {
+        loadImageToCanvas()
+      }
       setZoom(1)
       setPanOffset({ x: 0, y: 0 })
       setCurrentTool('brush') // 초기화 시 브러시 모드로 전환
     }
   }
 
-  const saveCanvas = () => {
+  const saveCanvas = async () => {
+    const canvas = canvasRef.current
+    const imageData = canvas.toDataURL('image/png')
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        navigate('/login');
+        return;
+      }
+
+      // 이어서 색칠하기인 경우 기존 그림 업데이트
+      if (selectedImage && selectedImage.isContinue && selectedImage.id) {
+        const response = await axios.put(`http://localhost:5000/api/drawings/${selectedImage.id}`, {
+          image: imageData
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          alert("그림이 성공적으로 업데이트되었습니다!");
+          navigate('/mypage/gallery');
+        } else {
+          alert("그림 업데이트에 실패했습니다: " + response.data.error);
+        }
+      } else {
+        // 새로운 색칠하기인 경우 새로 저장
+        const response = await axios.post('http://localhost:5000/api/colored-drawings', {
+          image: imageData
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data.success) {
+          alert("색칠한 그림이 성공적으로 저장되었습니다!");
+          navigate('/mypage/gallery');
+        } else {
+          alert("그림 저장에 실패했습니다: " + response.data.error);
+        }
+      }
+    } catch (error) {
+      console.error("색칠 그림 저장 API 오류:", error);
+      if (error.response?.status === 401) {
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        navigate('/login');
+      } else {
+        alert("그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+      }
+    }
+  }
+
+  const downloadCanvas = () => {
     const canvas = canvasRef.current
     const link = document.createElement('a')
     link.download = `${selectedImage.name}_colored.png`
@@ -258,7 +391,7 @@ function Fillcanvas() {
           <button className="back-button" onClick={goBack}>
             ← 뒤로가기
           </button>
-          <h1>{selectedImage.name} 색칠하기</h1>
+          <h1>{selectedImage.name}</h1>
         </div>
         
         <div className="header-center">
@@ -300,7 +433,7 @@ function Fillcanvas() {
             초기화
           </button>
           <button className="action-button save" onClick={saveCanvas}>
-            저장
+            {selectedImage && selectedImage.isContinue ? '업데이트' : '저장'}
           </button>
         </div>
       </div>
@@ -328,6 +461,7 @@ function Fillcanvas() {
                 height: canvasSize.height,
                 cursor: 'none'
               }}
+              willReadFrequently={true}
             />
             
             {/* 커스텀 커서 */}
@@ -597,6 +731,7 @@ function Fillcanvas() {
           background: rgb(35, 173, 127);
           transform: scale(1.05);
         }
+
 
         .canvas-workspace {
           display: flex;

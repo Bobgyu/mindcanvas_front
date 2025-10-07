@@ -8,6 +8,93 @@ function MyGallery() {
   const [selectedDrawing, setSelectedDrawing] = useState(null);
   const navigate = useNavigate();
 
+  // 색칠하기 원본 이미지 목록
+  const colorImages = [
+    { id: 1, name: '호작도', filename: 'hojakdo.png', description: '조선시대 화가 김홍도의 호작도' },
+    { id: 2, name: '미인도', filename: 'miindo.png', description: '조선시대 미인도' },
+    { id: 3, name: '천지창조', filename: 'thecreation.png', description: '미켈란젤로의 천지창조' },
+    { id: 4, name: '진주 귀걸이를 한 소녀', filename: 'pearl.png', description: '베르메르의 진주 귀걸이를 한 소녀' },
+    { id: 5, name: '피카소', filename: 'picaso.png', description: '피카소의 작품' },
+    { id: 6, name: '해바라기', filename: 'sunflower.png', description: '반 고흐의 해바라기' },
+    { id: 7, name: '모나리자', filename: 'monarisa.png', description: '레오나르도 다 빈치의 모나리자' },
+    { id: 8, name: '별이 빛나는 밤', filename: 'starnight.png', description: '반 고흐의 별이 빛나는 밤' }
+  ];
+
+  // 이미지 유사도를 계산하는 함수
+  const calculateImageSimilarity = (img1, img2) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 두 이미지를 같은 크기로 리사이즈
+    const size = 64;
+    canvas.width = size;
+    canvas.height = size;
+    
+    // 첫 번째 이미지 그리기
+    ctx.drawImage(img1, 0, 0, size, size);
+    const data1 = ctx.getImageData(0, 0, size, size).data;
+    
+    // 두 번째 이미지 그리기
+    ctx.drawImage(img2, 0, 0, size, size);
+    const data2 = ctx.getImageData(0, 0, size, size).data;
+    
+    // 픽셀 차이 계산
+    let diff = 0;
+    for (let i = 0; i < data1.length; i += 4) {
+      const r1 = data1[i];
+      const g1 = data1[i + 1];
+      const b1 = data1[i + 2];
+      const r2 = data2[i];
+      const g2 = data2[i + 1];
+      const b2 = data2[i + 2];
+      
+      diff += Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+    }
+    
+    // 유사도 점수 (낮을수록 유사)
+    return diff / (size * size * 3 * 255);
+  };
+
+  // 색칠된 이미지에서 가장 유사한 원본 이미지 찾기
+  const findMostSimilarOriginalImage = async (coloredImageData) => {
+    return new Promise((resolve) => {
+      const coloredImg = new Image();
+      coloredImg.crossOrigin = 'anonymous';
+      coloredImg.onload = async () => {
+        let bestMatch = colorImages[0]; // 기본값
+        let bestScore = Infinity;
+        
+        // 모든 원본 이미지와 비교
+        const comparisons = colorImages.map(async (originalImage) => {
+          return new Promise((resolve) => {
+            const originalImg = new Image();
+            originalImg.crossOrigin = 'anonymous';
+            originalImg.onload = () => {
+              const similarity = calculateImageSimilarity(coloredImg, originalImg);
+              resolve({ image: originalImage, score: similarity });
+            };
+            originalImg.onerror = () => resolve({ image: originalImage, score: Infinity });
+            originalImg.src = `/src/imgdata/colorimg/${originalImage.filename}`;
+          });
+        });
+        
+        const results = await Promise.all(comparisons);
+        
+        // 가장 유사한 이미지 찾기
+        for (const result of results) {
+          if (result.score < bestScore) {
+            bestScore = result.score;
+            bestMatch = result.image;
+          }
+        }
+        
+        resolve(bestMatch);
+      };
+      coloredImg.onerror = () => resolve(colorImages[0]); // 오류 시 기본값
+      coloredImg.src = coloredImageData;
+    });
+  };
+
   useEffect(() => {
     const fetchDrawings = async () => {
       const token = localStorage.getItem('authToken');
@@ -45,19 +132,8 @@ function MyGallery() {
   }, [navigate]);
 
   const handleThumbnailClick = (drawing) => {
-    // 분석된 그림이면 상세보기, 아니면 이어서 그리기
-    if (drawing.analysis_result) {
-      setSelectedDrawing(drawing);
-    } else {
-      // 이어서 그리기 - 선택된 이미지 정보를 localStorage에 저장하고 캔버스 페이지로 이동
-      const imageData = {
-        id: drawing.id,
-        image: drawing.image,
-        isContinue: true // 이어서 그리기 플래그
-      };
-      localStorage.setItem('selectedColorImage', JSON.stringify(imageData));
-      navigate('/draw/fillcanvas');
-    }
+    // 모든 그림을 상세보기로 처리 (삭제 기능을 위해)
+    setSelectedDrawing(drawing);
   };
 
   const closeDetail = () => {
@@ -221,6 +297,37 @@ function MyGallery() {
                 <p className="text-sm text-gray-600">저장일: {new Date(selectedDrawing.created_at).toLocaleString()}</p>
               </div>
 
+              {/* 이어서 색칠하기 버튼 (분석되지 않은 그림에만) */}
+              {!selectedDrawing.analysis_result && (
+                <div className="mb-4">
+                  <button
+                    onClick={async () => {
+                      try {
+                        // 자동으로 가장 유사한 원본 이미지 찾기
+                        const detectedImage = await findMostSimilarOriginalImage(selectedDrawing.image);
+                        
+                        const imageData = {
+                          id: selectedDrawing.id,
+                          filename: detectedImage.filename,
+                          name: detectedImage.name,
+                          coloredImage: selectedDrawing.image,
+                          isContinue: true
+                        };
+                        
+                        localStorage.setItem('selectedColorImage', JSON.stringify(imageData));
+                        navigate('/draw/fillcanvas');
+                      } catch (error) {
+                        console.error('원본 이미지 자동 감지 실패:', error);
+                        alert('원본 이미지를 자동으로 찾을 수 없습니다. 다시 시도해주세요.');
+                      }
+                    }}
+                    className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    이어서 색칠하기
+                  </button>
+                </div>
+              )}
+
               {selectedDrawing.analysis_result ? (
                 <div className="border-t pt-4">
                   <div className="flex items-center mb-4">
@@ -297,6 +404,7 @@ function MyGallery() {
             </div>
           </div>
         )}
+
       </main>
     </div>
   );
