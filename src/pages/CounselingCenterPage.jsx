@@ -193,7 +193,7 @@ const CounselingCenterPage = () => {
             fontWeight: 'bold'
           }}
         >
-          뒤로가기
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '16px', height: '16px' }} />
         </button>
       </div>
 

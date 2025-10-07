@@ -230,8 +230,15 @@ function Tree() {
       </div>
 
       {/* 뒤로가기 */}
-      <div className='goback'>
-        <p onClick={handleBack} style={{ cursor: 'pointer' }}>뒤로가기</p>
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        zIndex: 100
+      }}>
+        <p onClick={handleBack} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
+        </p>
       </div>
       
       {/* 메인 그리기 영역 */}
@@ -244,13 +251,30 @@ function Tree() {
         boxSizing: 'border-box',
         position: 'relative'
       }}>
+        {/* 나무 유형 표시 */}
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#4A90E2',
+          color: 'white',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          zIndex: 100
+        }}>
+          나무
+        </div>
+
         {/* 캔버스 */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
           marginBottom: '30px',
-          marginTop: '60px',
+          marginTop: '120px',
           position: 'relative'
         }}>
           <canvas

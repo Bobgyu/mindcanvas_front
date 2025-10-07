@@ -11,8 +11,15 @@ function Coordinator() {
 
   return (
     <>
-      <div className='goback'>
-        <p onClick={handleBack} style={{ cursor: 'pointer' }}>뒤로가기</p>
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        zIndex: 100
+      }}>
+        <p onClick={handleBack} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
+        </p>
       </div>
       <div className='profile-area'>
         <div className='coordi-profile'>

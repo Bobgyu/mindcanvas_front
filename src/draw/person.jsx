@@ -221,7 +221,9 @@ function Person() {
       <>
         {/* 뒤로가기 */}
         <div className='goback'>
-          <p onClick={handleBack} style={{ cursor: 'pointer' }}>뒤로가기</p>
+          <p onClick={handleBack} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
+          </p>
         </div>
 
         {/* 성별 선택 화면 */}
@@ -371,8 +373,15 @@ function Person() {
       </div>
 
       {/* 뒤로가기 */}
-      <div className='goback'>
-        <p onClick={handleBack} style={{ cursor: 'pointer' }}>뒤로가기</p>
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        zIndex: 100
+      }}>
+        <p onClick={handleBack} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
+        </p>
       </div>
       
       {/* 메인 그리기 영역 */}
@@ -389,7 +398,8 @@ function Person() {
         <div style={{
           position: 'fixed',
           top: '20px',
-          left: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
           backgroundColor: selectedGender === 'male' ? '#4A90E2' : '#E91E63',
           color: 'white',
           padding: '8px 16px',
@@ -407,7 +417,7 @@ function Person() {
           alignItems: 'center', 
           justifyContent: 'center',
           marginBottom: '30px',
-          marginTop: '60px',
+          marginTop: '120px',
           position: 'relative'
         }}>
           <canvas
