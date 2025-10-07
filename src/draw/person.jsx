@@ -230,12 +230,15 @@ function Person() {
           flexDirection: 'column', 
           alignItems: 'center', 
           justifyContent: 'center',
-          minHeight: '100vh',
+          height: '58rem',
           padding: '20px',
-          backgroundColor: '#f8f9fa'
+          backgroundColor: '#f8f9fa',
+          maxWidth: '29rem',
+          margin: '0 auto',
+          borderRadius: '1.5rem'
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: '#CEF4E7',
             padding: '40px',
             borderRadius: '20px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
@@ -278,7 +281,11 @@ function Person() {
                   cursor: 'pointer',
                   boxShadow: '0 4px 15px rgba(74, 144, 226, 0.3)',
                   transition: 'all 0.3s ease',
-                  minWidth: '120px'
+                  minWidth: '120px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.backgroundColor = '#357ABD'
@@ -291,7 +298,8 @@ function Person() {
                   e.target.style.boxShadow = '0 4px 15px rgba(74, 144, 226, 0.3)'
                 }}
               >
-                👨 남자
+                <img src="/src/imgdata/icon/boy.png" alt="남자" style={{ width: '24px', height: '24px' }} />
+                남자
               </button>
 
               {/* 여자 선택 버튼 */}
@@ -308,7 +316,11 @@ function Person() {
                   cursor: 'pointer',
                   boxShadow: '0 4px 15px rgba(233, 30, 99, 0.3)',
                   transition: 'all 0.3s ease',
-                  minWidth: '120px'
+                  minWidth: '120px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.backgroundColor = '#C2185B'
@@ -321,7 +333,8 @@ function Person() {
                   e.target.style.boxShadow = '0 4px 15px rgba(233, 30, 99, 0.3)'
                 }}
               >
-                👩 여자
+                <img src="/src/imgdata/icon/girl.png" alt="여자" style={{ width: '24px', height: '24px' }} />
+                여자
               </button>
             </div>
           </div>
@@ -344,7 +357,7 @@ function Person() {
           onClick={saveDrawing}
           style={{ 
             padding: '10px 20px', 
-            backgroundColor: '#3a9d1f', 
+            backgroundColor: 'rgb(39, 192, 141)', 
             color: 'white', 
             border: 'none', 
             borderRadius: '20px', 
@@ -385,7 +398,7 @@ function Person() {
           fontWeight: 'bold',
           zIndex: 100
         }}>
-          {selectedGender === 'male' ? '👨 남자' : '👩 여자'}
+          {selectedGender === 'male' ? '남자' : '여자'}
         </div>
 
         {/* 캔버스 */}
@@ -407,7 +420,7 @@ function Person() {
               border: '1px solid #000',
               borderRadius: '10px',
               cursor: 'none',
-              backgroundColor: 'white',
+              backgroundColor: '#CEF4E7',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}
           />
@@ -499,7 +512,7 @@ function Person() {
                 height: '50px', 
                 borderRadius: '50%', 
                 border: '1px solid #ccc',
-                backgroundColor: 'white',
+                backgroundColor: '#CEF4E7',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -519,7 +532,7 @@ function Person() {
                 bottom: '70px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                backgroundColor: 'white',
+                backgroundColor: '#CEF4E7',
                 border: '1px solid #ccc',
                 borderRadius: '10px',
                 padding: '15px',
@@ -596,7 +609,7 @@ function Person() {
                     onClick={addCustomColor}
                     style={{
                       padding: '8px 16px',
-                      backgroundColor: '#3a9d1f',
+                      backgroundColor: 'rgb(39, 192, 141)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -607,11 +620,11 @@ function Person() {
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#338a1a'
+                      e.target.style.backgroundColor = 'rgb(35, 173, 127)'
                       e.target.style.transform = 'translateY(-1px)'
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#3a9d1f'
+                      e.target.style.backgroundColor = 'rgb(39, 192, 141)'
                       e.target.style.transform = 'translateY(0)'
                     }}
                   >
@@ -631,7 +644,7 @@ function Person() {
               height: '50px', 
               borderRadius: '50%', 
               border: '1px solid #ccc',
-              backgroundColor: isAnalyzing ? '#f0f0f0' : 'white',
+              backgroundColor: isAnalyzing ? '#f0f0f0' : '#CEF4E7',
               cursor: isAnalyzing ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',

@@ -7,11 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        'primary-green': '#3a9d1f',
-        'primary-green-hover': '#3fc41a',
-        'primary-green-active': '#338a1a',
-        'background-green': '#a3ec66',
-        'light-green': '#dff5cd',
+        'primary-green': 'rgb(39, 192, 141)',
+        'primary-green-hover': 'rgb(35, 173, 127)',
+        'primary-green-active': 'rgb(32, 154, 113)',
+        'background-green': '#30E8AB',
+        'light-green': '#CEF4E7',
       },
       width: {
         '29rem': '29rem',

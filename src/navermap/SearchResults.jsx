@@ -494,7 +494,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           </div>
           <div className="flex items-center gap-2">
             {apiStatus === 'real' && (
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#30E8AB' }}></span>
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgb(39, 192, 141)' }}></span>
             )}
             {apiStatus === 'demo' && (
               <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#CEF4E7' }}></span>
@@ -516,7 +516,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#CEF4E7';
-                  e.currentTarget.style.borderLeftColor = '#30E8AB';
+                  e.currentTarget.style.borderLeftColor = 'rgb(39, 192, 141)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = '#F9FAF9';
@@ -546,7 +546,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                       </span>
                       
                       {currentLocation && result.coords && (
-                        <span className="inline-block px-2 py-1 text-xs rounded" style={{ backgroundColor: '#30E8AB', color: 'white' }}>
+                        <span className="inline-block px-2 py-1 text-xs rounded" style={{ backgroundColor: 'rgb(39, 192, 141)', color: 'white' }}>
                           {calculateDistance(
                             currentLocation.lat, currentLocation.lng,
                             result.coords.lat, result.coords.lng
@@ -556,7 +556,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                     </div>
                   </div>
                   
-                  <div className="ml-2" style={{ color: '#30E8AB' }}>
+                  <div className="ml-2" style={{ color: 'rgb(39, 192, 141)' }}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>

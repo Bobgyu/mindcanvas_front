@@ -23,7 +23,7 @@
 @layer components {
   /* 공통 스타일 */
   #root {
-    @apply bg-white w-29rem h-58rem rounded-3xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+    @apply bg-light-green w-29rem h-58rem rounded-3xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
   }
   
   /* App 컴포넌트 스타일 */
@@ -77,6 +77,7 @@
     @apply hover:bg-primary-green-hover hover:scale-105 hover:shadow-lg;
     @apply active:bg-primary-green-active active:scale-95;
     @apply transition-all duration-200;
+    @apply flex items-center justify-center;
   }
   
   .lower-options {

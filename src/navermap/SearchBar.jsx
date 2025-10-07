@@ -50,13 +50,13 @@ const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false, onAut
           type="submit"
           className="px-6 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
           style={{ 
-            backgroundColor: '#30E8AB'
+            backgroundColor: 'rgb(39, 192, 141)'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#2BD4A0';
+            e.target.style.backgroundColor = 'rgb(35, 173, 127)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#30E8AB';
+            e.target.style.backgroundColor = 'rgb(39, 192, 141)';
           }}
         >
           검색
@@ -72,17 +72,17 @@ const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false, onAut
             : ''
         }`}
         style={{
-          backgroundColor: locationLoading ? '#CEF4E7' : '#30E8AB',
+          backgroundColor: locationLoading ? '#CEF4E7' : 'rgb(39, 192, 141)',
           color: locationLoading ? '#111827' : 'white'
         }}
         onMouseEnter={(e) => {
           if (!locationLoading) {
-            e.target.style.backgroundColor = '#2BD4A0';
+            e.target.style.backgroundColor = 'rgb(35, 173, 127)';
           }
         }}
         onMouseLeave={(e) => {
           if (!locationLoading) {
-            e.target.style.backgroundColor = '#30E8AB';
+            e.target.style.backgroundColor = 'rgb(39, 192, 141)';
           }
         }}
       >

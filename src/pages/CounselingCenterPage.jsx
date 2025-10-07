@@ -156,14 +156,14 @@ const CounselingCenterPage = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#F9FAF9',
       padding: '20px',
       paddingBottom: '40px',
       height: 'auto'
     }}>
       {/* 헤더 */}
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: '#CEF4E7',
         borderRadius: '15px',
         padding: '20px',
         marginBottom: '20px',
@@ -173,10 +173,10 @@ const CounselingCenterPage = () => {
         alignItems: 'center'
       }}>
         <div>
-          <h1 style={{ margin: '0 0 5px 0', color: '#333', fontSize: '24px' }}>
+          <h1 style={{ margin: '0 0 5px 0', color: '#111827', fontSize: '24px' }}>
             근처 심리상담센터 찾기
           </h1>
-          <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
+          <p style={{ margin: '0', color: '#111827', fontSize: '14px' }}>
             근처 심리상담센터를 검색하고 위치를 확인할 수 있습니다.
           </p>
         </div>
@@ -184,7 +184,7 @@ const CounselingCenterPage = () => {
           onClick={() => navigate(-1)}
           style={{
             padding: '10px 20px',
-            backgroundColor: '#6c757d',
+            backgroundColor: 'rgb(39, 192, 141)',
             color: 'white',
             border: 'none',
             borderRadius: '25px',
@@ -199,7 +199,7 @@ const CounselingCenterPage = () => {
 
       {/* 검색 바 */}
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: '#CEF4E7',
         borderRadius: '15px',
         padding: '20px',
         marginBottom: '20px',
@@ -224,7 +224,7 @@ const CounselingCenterPage = () => {
         {/* 검색 결과 리스트 */}
         <div style={{
           width: '100%',
-          backgroundColor: 'white',
+          backgroundColor: '#CEF4E7',
           borderRadius: '15px',
           padding: '20px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
@@ -243,14 +243,14 @@ const CounselingCenterPage = () => {
         {/* 지도 */}
         <div style={{
           width: '100%',
-          backgroundColor: 'white',
+          backgroundColor: '#CEF4E7',
           borderRadius: '15px',
           padding: '20px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           position: 'relative',
           minHeight: '800px'
         }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#111827' }}>
                 {currentLocation 
                   ? `지도 (5km 이내 ${searchResults.length}개 심리상담센터)`
                   : `지도 (${searchResults.length}개 심리상담센터)`
@@ -270,13 +270,13 @@ const CounselingCenterPage = () => {
       {/* 선택된 위치 정보 */}
       {selectedLocation && (
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: '#CEF4E7',
           borderRadius: '15px',
           padding: '20px',
           marginTop: '20px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#111827' }}>
             선택된 상담센터 정보
           </h3>
           <div style={{
@@ -285,30 +285,30 @@ const CounselingCenterPage = () => {
             gap: '20px'
           }}>
             <div>
-              <h4 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '18px' }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#111827', fontSize: '18px' }}>
                 {selectedLocation.title}
               </h4>
-              <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: '#666' }}>
+              <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: '#111827' }}>
                 📍 {selectedLocation.roadAddress || selectedLocation.address}
               </p>
               {selectedLocation.telephone && (
-                <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: '#4ecdc4' }}>
+                <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: 'rgb(39, 192, 141)' }}>
                   📞 {selectedLocation.telephone}
                 </p>
               )}
               {selectedLocation.category && (
-                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#111827' }}>
                   {selectedLocation.category}
                 </p>
               )}
             </div>
             {selectedLocation.coords && (
               <div>
-                <h5 style={{ margin: '0 0 10px 0', color: '#333' }}>좌표 정보</h5>
-                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666' }}>
+                <h5 style={{ margin: '0 0 10px 0', color: '#111827' }}>좌표 정보</h5>
+                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#111827' }}>
                   위도: {selectedLocation.coords.lat.toFixed(6)}
                 </p>
-                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666' }}>
+                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#111827' }}>
                   경도: {selectedLocation.coords.lng.toFixed(6)}
                 </p>
               </div>

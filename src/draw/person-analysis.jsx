@@ -474,7 +474,7 @@ function PersonAnalysis() {
             onClick={findMindCoordinator}
             style={{
               padding: '15px 25px',
-              backgroundColor: '#3a9d1f',
+              backgroundColor: 'rgb(39, 192, 141)',
               color: 'white',
               border: 'none',
               borderRadius: '25px',
@@ -485,11 +485,11 @@ function PersonAnalysis() {
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#338a1a'
+              e.target.style.backgroundColor = 'rgb(35, 173, 127)'
               e.target.style.transform = 'translateY(-2px)'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#3a9d1f'
+              e.target.style.backgroundColor = 'rgb(39, 192, 141)'
               e.target.style.transform = 'translateY(0)'
             }}
           >
@@ -501,7 +501,7 @@ function PersonAnalysis() {
             onClick={findCounselingCenter}
             style={{
               padding: '15px 25px',
-              backgroundColor: '#4ecdc4',
+              backgroundColor: 'rgb(39, 192, 141)',
               color: 'white',
               border: 'none',
               borderRadius: '25px',
@@ -512,11 +512,11 @@ function PersonAnalysis() {
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#45b7aa'
+              e.target.style.backgroundColor = 'rgb(35, 173, 127)'
               e.target.style.transform = 'translateY(-2px)'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#4ecdc4'
+              e.target.style.backgroundColor = 'rgb(39, 192, 141)'
               e.target.style.transform = 'translateY(0)'
             }}
           >

@@ -45,7 +45,7 @@ function MyPage() {
       <input type="button" className='upper-option' value="마음코디네이터" onClick={handleCoordinator}/>
       <input type="button" className='upper-option' value="정보변경" />
       <input type="button" className='upper-option' value="공지사항" />
-      <input type="button" className='upper-option' value="로그아웃" onClick={handleLogout} style={{backgroundColor: '#ff6b6b', color: 'white'}} />
+      <input type="button" className='upper-option' value="로그아웃" onClick={handleLogout} style={{backgroundColor: 'rgb(39, 192, 141)', color: 'white'}} />
     </div>
     <div className='lower-options'>
       <input type="button" className='lower-option' value="그리기" onClick={() => navigate('/mainpage')} />

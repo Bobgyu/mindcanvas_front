@@ -1,4 +1,6 @@
-Primary: #30E8AB (민트/브랜드 색)
+Primary:rgb(39, 192, 141) (민트/브랜드 색)
+
+Thirdcolor: #30E8AB (민트/브랜드 색)
 
 Secondary: #CEF4E7 (연민트/코디네이터 말풍선)
 

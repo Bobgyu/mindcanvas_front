@@ -104,9 +104,18 @@ function MainPage() {
     <div className='options'>
       <div className='picture-options'>
         <h2>그림심리테스트</h2>
-        <input type="button" className='option' value="집" onClick={gotoHome} />
-        <input type="button" className='option' value="나무" onClick={gotoTree} />
-        <input type="button" className='option' value="사람" onClick={gotoPerson} />
+        <button className='option' onClick={gotoHome}>
+          <img src="/src/imgdata/icon/home.png" alt="집" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
+          집
+        </button>
+        <button className='option' onClick={gotoTree}>
+          <img src="/src/imgdata/icon/tree.png" alt="나무" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
+          나무
+        </button>
+        <button className='option' onClick={gotoPerson}>
+          <img src="/src/imgdata/icon/person.png" alt="사람" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
+          사람
+        </button>
       </div>
 
       <div className='draw-options'>

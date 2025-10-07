@@ -216,7 +216,7 @@ function Tree() {
           onClick={saveDrawing}
           style={{ 
             padding: '10px 20px', 
-            backgroundColor: '#3a9d1f', 
+            backgroundColor: 'rgb(39, 192, 141)', 
             color: 'white', 
             border: 'none', 
             borderRadius: '20px', 
@@ -263,7 +263,7 @@ function Tree() {
               border: '1px solid #000',
               borderRadius: '10px',
               cursor: 'none',
-              backgroundColor: 'white',
+              backgroundColor: '#CEF4E7',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}
           />
@@ -355,7 +355,7 @@ function Tree() {
                 height: '50px', 
                 borderRadius: '50%', 
                 border: '1px solid #ccc',
-                backgroundColor: 'white',
+                backgroundColor: '#CEF4E7',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -375,7 +375,7 @@ function Tree() {
                 bottom: '70px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                backgroundColor: 'white',
+                backgroundColor: '#CEF4E7',
                 border: '1px solid #ccc',
                 borderRadius: '10px',
                 padding: '15px',
@@ -451,7 +451,7 @@ function Tree() {
                     onClick={addCustomColor}
                     style={{
                       padding: '8px 16px',
-                      backgroundColor: '#3a9d1f',
+                      backgroundColor: 'rgb(39, 192, 141)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -462,11 +462,11 @@ function Tree() {
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#338a1a'
+                      e.target.style.backgroundColor = 'rgb(35, 173, 127)'
                       e.target.style.transform = 'translateY(-1px)'
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#3a9d1f'
+                      e.target.style.backgroundColor = 'rgb(39, 192, 141)'
                       e.target.style.transform = 'translateY(0)'
                     }}
                   >
@@ -486,7 +486,7 @@ function Tree() {
               height: '50px', 
               borderRadius: '50%', 
               border: '1px solid #ccc',
-              backgroundColor: isAnalyzing ? '#f0f0f0' : 'white',
+              backgroundColor: isAnalyzing ? '#f0f0f0' : '#CEF4E7',
               cursor: isAnalyzing ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',

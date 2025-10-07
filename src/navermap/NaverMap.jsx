@@ -350,7 +350,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
       
       {mapError && (
         <div className="absolute inset-0 flex items-center justify-center p-4" style={{ backgroundColor: '#F9FAF9' }}>
-          <div className="rounded-lg shadow-lg p-6 max-w-md w-full" style={{ backgroundColor: 'white' }}>
+          <div className="rounded-lg shadow-lg p-6 max-w-md w-full" style={{ backgroundColor: '#CEF4E7' }}>
             <div className="text-center">
               <div className="text-4xl mb-4" style={{ color: '#30E8AB' }}>⚠️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#111827' }}>맵 로드 오류</h3>
@@ -367,7 +367,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
                   <li><strong>브라우저 캐시 삭제:</strong> 개발자 도구에서 하드 리프레시 (Ctrl+Shift+R)</li>
                 </ol>
                 
-                <div className="mt-4 p-3 rounded border" style={{ backgroundColor: '#CEF4E7', borderColor: '#30E8AB' }}>
+                <div className="mt-4 p-3 rounded border" style={{ backgroundColor: '#CEF4E7', borderColor: 'rgb(39, 192, 141)' }}>
                   <h5 className="font-semibold mb-1" style={{ color: '#111827' }}>현재 API 정보:</h5>
                   <p style={{ color: '#111827' }}><strong>Client ID:</strong> {import.meta.env.VITE_NAVER_CLIENT_ID || '설정되지 않음'}</p>
                   <p style={{ color: '#111827' }}><strong>웹 서비스 URL:</strong> http://localhost:3000 ✅ (등록됨)</p>
@@ -387,7 +387,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
       )}
       
       {mapLoaded && !mapError && (
-        <div className="absolute top-4 left-4 px-3 py-2 rounded text-sm" style={{ backgroundColor: '#CEF4E7', borderColor: '#30E8AB', color: '#111827' }}>
+        <div className="absolute top-4 left-4 px-3 py-2 rounded text-sm" style={{ backgroundColor: '#CEF4E7', borderColor: 'rgb(39, 192, 141)', color: '#111827' }}>
           ✅ 네이버 맵 로드 성공
         </div>
       )}

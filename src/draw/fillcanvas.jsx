@@ -589,12 +589,12 @@ function Fillcanvas() {
         }
 
         .action-button.save {
-          background: #4CAF50;
+          background: rgb(39, 192, 141);
           color: white;
         }
 
         .action-button.save:hover {
-          background: #45a049;
+          background: rgb(35, 173, 127);
           transform: scale(1.05);
         }
 
