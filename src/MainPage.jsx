@@ -120,8 +120,14 @@ function MainPage() {
 
       <div className='draw-options'>
         <h2>그리기</h2>
-        <input type="button" className='option' value="마음일기" onClick={gotoEmotionDiary} />
-        <input type="button" className='option' value="색칠하기" onClick={gotoColorfill} />
+        <button className='option' onClick={gotoEmotionDiary}>
+          <img src="/src/imgdata/icon/diary.png" alt="마음일기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
+          마음일기
+        </button>
+        <button className='option' onClick={gotoColorfill}>
+          <img src="/src/imgdata/icon/Painter.png" alt="색칠하기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
+          색칠하기
+        </button>
         <input type="button" className='option' value="자유롭게" />
       </div>
     </div>
