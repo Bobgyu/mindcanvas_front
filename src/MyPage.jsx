@@ -47,12 +47,83 @@ function MyPage() {
       <input type="button" className='upper-option' value="공지사항" />
       <input type="button" className='upper-option' value="로그아웃" onClick={handleLogout} style={{backgroundColor: 'rgb(39, 192, 141)', color: 'white'}} />
     </div>
-    <div className='lower-options'>
-      <input type="button" className='lower-option' value="그리기" onClick={() => navigate('/mainpage')} />
-      <input type="button" className='lower-option' value="분석" />
-      <input type="button" className='lower-option' value="채팅" />
-      <input type="button" className='lower-option' value="챗봇" />
-      <input type="button" className='lower-option' value="마이페이지" />
+    {/* 네비게이션 바 외부 컨테이너 */}
+    <div style={{
+      backgroundColor: 'rgb(39, 192, 141)',
+      borderRadius: '50px',
+      margin: '20px auto',
+      width: '80%',
+      height: '70px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      {/* 내부 버튼 컨테이너 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        width: '100%',
+        padding: '0px 20px',
+        height: '100%'
+      }}>
+        <button className='lower-option' onClick={() => navigate('/mainpage')} style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/PAINT BRUSH.png" alt="그리기" style={{ width: '32px', height: '32px' }} />
+        </button>
+        <button className='lower-option' style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/chat.png" alt="채팅" style={{ width: '32px', height: '32px' }} />
+        </button>
+        <button className='lower-option' style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/chatbot.png" alt="챗봇" style={{ width: '36px', height: '36px' }} />
+        </button>
+        <button className='lower-option' style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/user.png" alt="마이페이지" style={{ width: '32px', height: '32px' }} />
+        </button>
+      </div>
     </div>
     </>
   )

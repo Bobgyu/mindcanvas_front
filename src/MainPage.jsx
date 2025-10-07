@@ -103,7 +103,19 @@ function MainPage() {
     <>
     <div className='options'>
       <div className='picture-options'>
-        <h2>그림심리테스트</h2>
+        <h2 style={{ fontWeight: '800', fontSize: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            backgroundColor: '#CEF4E7',
+            fontSize: '24px'
+          }}>🧠</span>
+          그림심리테스트
+        </h2>
         <button className='option' onClick={gotoHome}>
           <img src="/src/imgdata/icon/home.png" alt="집" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
           집
@@ -117,9 +129,29 @@ function MainPage() {
           사람
         </button>
       </div>
+      {/* 섹션 구분선 (Primary) */}
+      <div style={{
+        width: '80%',
+        height: '2px',
+        backgroundColor: 'rgb(39, 192, 141)',
+        borderRadius: '1px',
+        margin: '8px auto 0'
+      }} />
 
       <div className='draw-options'>
-        <h2>그리기</h2>
+        <h2 style={{ fontWeight: '800', fontSize: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            backgroundColor: '#CEF4E7',
+            fontSize: '24px'
+          }}>🎨</span>
+          아트테라피
+        </h2>
         <button className='option' onClick={gotoEmotionDiary}>
           <img src="/src/imgdata/icon/diary.png" alt="마음일기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
           마음일기
@@ -128,15 +160,89 @@ function MainPage() {
           <img src="/src/imgdata/icon/Painter.png" alt="색칠하기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
           색칠하기
         </button>
-        <input type="button" className='option' value="자유롭게" />
+        <button className='option'>
+          <img src="/src/imgdata/icon/drawcanvas.png" alt="테마그리기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
+          테마그리기
+        </button>
       </div>
     </div>
-    <div className='lower-options'>
-      <input type="button" className='lower-option' value="그리기" />
-      <input type="button" className='lower-option' value="분석" />
-      <input type="button" className='lower-option' value="채팅" />
-      <input type="button" className='lower-option' value="챗봇" onClick={openChatbot} />
-      <input type="button" className='lower-option' value="마이페이지" onClick={gotoMypage}/>
+    {/* 네비게이션 바 외부 컨테이너 */}
+    <div style={{
+      backgroundColor: 'rgb(39, 192, 141)',
+      borderRadius: '50px',
+      margin: '20px auto',
+      width: '80%',
+      height: '70px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      {/* 내부 버튼 컨테이너 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        width: '100%',
+        padding: '0px 20px',
+        height: '100%'
+      }}>
+        <button className='lower-option' style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/PAINT BRUSH.png" alt="그리기" style={{ width: '32px', height: '32px' }} />
+        </button>
+        <button className='lower-option' style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/chat.png" alt="채팅" style={{ width: '32px', height: '32px' }} />
+        </button>
+        <button className='lower-option' onClick={openChatbot} style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/chatbot.png" alt="챗봇" style={{ width: '36px', height: '36px' }} />
+        </button>
+        <button className='lower-option' onClick={gotoMypage} style={{
+          backgroundColor: '#CEF4E7',
+          border: 'none',
+          borderRadius: '50%',
+          padding: '4px 0px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '50px',
+          height: '50px'
+        }}>
+          <img src="/src/imgdata/icon/user.png" alt="마이페이지" style={{ width: '32px', height: '32px' }} />
+        </button>
+      </div>
     </div>
     
     {/* 챗봇 모달 */}
