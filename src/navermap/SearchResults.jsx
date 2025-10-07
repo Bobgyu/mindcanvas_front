@@ -183,7 +183,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           }
           
           // 1단계: 네이버 검색 API 호출
-          const searchResults = await searchPlaces(searchQuery, 20);
+          const searchResults = await searchPlaces(searchQuery, 30);
           console.log('📋 검색 결과:', searchResults);
           
           if (!searchResults || searchResults.length === 0) {
@@ -223,10 +223,10 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                   console.log(`✅ 좌표 변환 성공:`, coords);
                   return {
                     id: item.link || `result_${index}`,
-                    title: item.title.replace(/<[^>]*>/g, ''), // HTML 태그 제거
+                    title: item.title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"), // HTML 태그 및 엔티티 제거
                     address: item.address,
                     category: item.category,
-                    description: item.description?.replace(/<[^>]*>/g, ''),
+                    description: item.description?.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                     coords: coords
                   };
                 } else {
@@ -234,10 +234,10 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                   // 좌표 변환 실패 시 기본 좌표 사용
                   return {
                     id: item.link || `result_${index}`,
-                    title: item.title.replace(/<[^>]*>/g, ''),
+                    title: item.title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                     address: item.address,
                     category: item.category,
-                    description: item.description?.replace(/<[^>]*>/g, ''),
+                    description: item.description?.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                     coords: { lat: 37.5665, lng: 126.9780 } // 기본 좌표
                   };
                 }
@@ -245,10 +245,10 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                 console.error(`❌ ${index + 1}번째 결과 처리 오류:`, error);
                 return {
                   id: item.link || `result_${index}`,
-                  title: item.title.replace(/<[^>]*>/g, ''),
+                  title: item.title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                   address: item.address,
                   category: item.category,
-                  description: item.description?.replace(/<[^>]*>/g, ''),
+                  description: item.description?.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                   coords: { lat: 37.5665, lng: 126.9780 } // 기본 좌표
                 };
               }
@@ -364,7 +364,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
               // 지역 접두사와 함께 검색
               const searchQuery = locationPrefix ? `${locationPrefix}${query}` : query;
               console.log('🔍 상담센터 검색:', searchQuery);
-              const searchData = await searchPlaces(searchQuery, 10);
+              const searchData = await searchPlaces(searchQuery, 15);
               
               if (searchData && searchData.length > 0) {
                 console.log(`✅ ${query} 검색 결과 ${searchData.length}개 발견`);
@@ -388,25 +388,25 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           });
 
           const resultsWithCoords = await Promise.all(
-            counselingResults.slice(0, 15).map(async (item, index) => {
+            counselingResults.slice(0, 20).map(async (item, index) => {
               try {
                 const coords = await geocodeAddress(item.address);
                 return {
                   id: item.link || `counseling_${index}`,
-                  title: item.title.replace(/<[^>]*>/g, ''),
+                  title: item.title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                   address: item.address,
                   category: item.category,
-                  description: item.description?.replace(/<[^>]*>/g, ''),
+                  description: item.description?.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                   coords: coords || { lat: 37.5665, lng: 126.9780 }
                 };
               } catch (error) {
                 console.error(`상담센터 ${index + 1} 좌표 변환 실패:`, error);
                 return {
                   id: item.link || `counseling_${index}`,
-                  title: item.title.replace(/<[^>]*>/g, ''),
+                  title: item.title.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                   address: item.address,
                   category: item.category,
-                  description: item.description?.replace(/<[^>]*>/g, ''),
+                  description: item.description?.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
                   coords: { lat: 37.5665, lng: 126.9780 }
                 };
               }
@@ -454,24 +454,23 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
 
   if (!searchTerm && !autoSearchTriggered && !loading) {
     return (
-      <div className="w-full h-full bg-gray-50 rounded-lg p-4">
-        <p className="text-gray-500 text-center">상담센터를 검색하고 있습니다...</p>
+      <div className="w-full h-full rounded-lg p-4" style={{ backgroundColor: '#F9FAF9' }}>
+        <p className="text-center" style={{ color: '#111827' }}>상담센터를 검색하고 있습니다...</p>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="w-full h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-800">검색결과</h3>
-          <p className="text-sm text-gray-600">"{searchTerm}" 검색 중...</p>
+      <div className="w-full h-full bg-white rounded-lg border overflow-hidden" style={{ borderColor: '#CEF4E7' }}>
+        <div className="p-4 border-b" style={{ borderColor: '#CEF4E7' }}>
+          <h3 className="font-semibold" style={{ color: '#111827' }}>검색결과</h3>
+          <p className="text-sm" style={{ color: '#111827' }}>"{searchTerm}" 검색 중...</p>
         </div>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-500">검색 중...</p>
-            <p className="text-xs text-gray-400 mt-1">네이버 검색 API 호출 중</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#30E8AB' }}></div>
+            <p style={{ color: '#111827' }}>검색 중...</p>
           </div>
         </div>
       </div>
@@ -479,12 +478,12 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
   }
 
   return (
-    <div className="w-full h-full bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="p-4 border-b border-gray-200">
+    <div className="w-full h-full bg-white rounded-lg border overflow-hidden" style={{ borderColor: '#CEF4E7' }}>
+      <div className="p-4 border-b" style={{ borderColor: '#CEF4E7' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-gray-800">검색결과</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="font-semibold" style={{ color: '#111827' }}>검색결과</h3>
+            <p className="text-sm" style={{ color: '#111827' }}>
               {autoSearchTriggered && !searchTerm
                 ? `근처 심리상담센터 (5km 이내 ${results.length}개)`
                 : currentLocation 
@@ -495,53 +494,59 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
           </div>
           <div className="flex items-center gap-2">
             {apiStatus === 'real' && (
-              <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                실제 API
-              </span>
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#30E8AB' }}></span>
             )}
             {apiStatus === 'demo' && (
-              <span className="inline-flex items-center px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
-                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
-                데모 데이터
-              </span>
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#CEF4E7' }}></span>
             )}
           </div>
         </div>
       </div>
       <div className="overflow-y-auto h-full">
         {results.length > 0 ? (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y" style={{ borderColor: '#CEF4E7' }}>
             {results.map((result, index) => (
               <div
                 key={result.id}
                 onClick={() => handleResultClick(result)}
-                className="p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 border-transparent hover:border-blue-500"
+                className="p-4 cursor-pointer transition-colors border-l-4 border-transparent hover:border-opacity-50"
+                style={{ 
+                  backgroundColor: '#F9FAF9',
+                  borderLeftColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#CEF4E7';
+                  e.currentTarget.style.borderLeftColor = '#30E8AB';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F9FAF9';
+                  e.currentTarget.style.borderLeftColor = 'transparent';
+                }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                      <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#CEF4E7', color: '#111827' }}>
                         {index + 1}
                       </span>
-                      <h4 className="font-medium text-gray-900">{result.title}</h4>
+                      <h4 className="font-medium" style={{ color: '#111827' }}>{result.title}</h4>
                     </div>
                     
-                    <p className="text-sm text-gray-600 mb-2">{result.address}</p>
+                    <p className="text-sm mb-2" style={{ color: '#111827' }}>{result.address}</p>
                     
                     {result.description && (
-                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+                      <p className="text-xs mb-2 line-clamp-2" style={{ color: '#111827' }}>
                         {result.description}
                       </p>
                     )}
                     
                     <div className="flex items-center gap-2">
-                      <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                      <span className="inline-block px-2 py-1 text-xs rounded" style={{ backgroundColor: '#CEF4E7', color: '#111827' }}>
                         {result.category}
                       </span>
                       
                       {currentLocation && result.coords && (
-                        <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                        <span className="inline-block px-2 py-1 text-xs rounded" style={{ backgroundColor: '#30E8AB', color: 'white' }}>
                           {calculateDistance(
                             currentLocation.lat, currentLocation.lng,
                             result.coords.lat, result.coords.lng
@@ -551,7 +556,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
                     </div>
                   </div>
                   
-                  <div className="ml-2 text-gray-400">
+                  <div className="ml-2" style={{ color: '#30E8AB' }}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -561,7 +566,7 @@ const SearchResults = ({ searchTerm, onLocationSelect, onResultsChange, currentL
             ))}
           </div>
         ) : (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center" style={{ color: '#111827' }}>
             <div className="text-4xl mb-2">🔍</div>
             <p>
               {autoSearchTriggered && !searchTerm

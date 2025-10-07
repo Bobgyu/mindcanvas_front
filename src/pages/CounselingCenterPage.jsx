@@ -136,8 +136,15 @@ const CounselingCenterPage = () => {
   const handleResultsChange = (results) => {
     setSearchResults(results)
     
-    // 첫 번째 결과로 맵 중심 이동
-    if (results.length > 0 && results[0].coords) {
+    // 현재 위치가 있으면 현재 위치를 우선으로 하고, 없을 때만 첫 번째 결과로 이동
+    if (currentLocation) {
+      // 현재 위치가 있으면 지도 중심을 현재 위치로 유지
+      setMapCenter({
+        lat: currentLocation.lat,
+        lng: currentLocation.lng
+      })
+    } else if (results.length > 0 && results[0].coords) {
+      // 현재 위치가 없을 때만 첫 번째 결과로 맵 중심 이동
       setMapCenter({
         lat: results[0].coords.lat,
         lng: results[0].coords.lng
@@ -170,7 +177,7 @@ const CounselingCenterPage = () => {
             근처 심리상담센터 찾기
           </h1>
           <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-            네이버 맵 API를 사용하여 심리상담센터를 검색하고 위치를 확인할 수 있습니다.
+            근처 심리상담센터를 검색하고 위치를 확인할 수 있습니다.
           </p>
         </div>
         <button
@@ -310,57 +317,6 @@ const CounselingCenterPage = () => {
         </div>
       )}
 
-      {/* API 상태 정보 */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '15px',
-        padding: '20px',
-        marginTop: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>
-          API 상태 정보
-        </h3>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '15px'
-        }}>
-          <div style={{
-            padding: '10px',
-            backgroundColor: '#e8f5e8',
-            borderRadius: '8px',
-            border: '1px solid #4caf50'
-          }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#2e7d32' }}>네이버 검색 API</h4>
-            <p style={{ margin: '0', fontSize: '12px', color: '#2e7d32' }}>
-              ✅ 정상 작동 중
-            </p>
-          </div>
-          <div style={{
-            padding: '10px',
-            backgroundColor: '#e8f5e8',
-            borderRadius: '8px',
-            border: '1px solid #4caf50'
-          }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#2e7d32' }}>네이버 지오코딩 API</h4>
-            <p style={{ margin: '0', fontSize: '12px', color: '#2e7d32' }}>
-              ✅ 정상 작동 중
-            </p>
-          </div>
-          <div style={{
-            padding: '10px',
-            backgroundColor: '#e8f5e8',
-            borderRadius: '8px',
-            border: '1px solid #4caf50'
-          }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#2e7d32' }}>네이버 맵 API</h4>
-            <p style={{ margin: '0', fontSize: '12px', color: '#2e7d32' }}>
-              ✅ 정상 작동 중
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

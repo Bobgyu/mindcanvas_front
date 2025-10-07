@@ -150,7 +150,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
 
       const mapOptions = {
         center: new window.naver.maps.LatLng(center.lat, center.lng),
-        zoom: 15,
+        zoom: 14,
         zoomControl: true,
         zoomControlOptions: {
           position: window.naver.maps.Position.TOP_RIGHT,
@@ -340,23 +340,23 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
       />
       
       {!mapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: '#F9FAF9' }}>
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">네이버 맵을 불러오는 중...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#30E8AB' }}></div>
+            <p style={{ color: '#111827' }}>네이버 맵을 불러오는 중...</p>
           </div>
         </div>
       )}
       
       {mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-4">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+        <div className="absolute inset-0 flex items-center justify-center p-4" style={{ backgroundColor: '#F9FAF9' }}>
+          <div className="rounded-lg shadow-lg p-6 max-w-md w-full" style={{ backgroundColor: 'white' }}>
             <div className="text-center">
-              <div className="text-red-500 text-4xl mb-4">⚠️</div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">맵 로드 오류</h3>
-              <p className="text-gray-600 mb-4">{mapError}</p>
+              <div className="text-4xl mb-4" style={{ color: '#30E8AB' }}>⚠️</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#111827' }}>맵 로드 오류</h3>
+              <p className="mb-4" style={{ color: '#111827' }}>{mapError}</p>
               
-              <div className="text-left text-sm text-gray-600">
+              <div className="text-left text-sm" style={{ color: '#111827' }}>
                 <h4 className="font-semibold mb-2">해결 방법:</h4>
                 <ol className="list-decimal list-inside space-y-1">
                   <li><strong>올바른 API 키 확인:</strong> Maps &gt; Application에서 지도 전용 API 키를 사용해야 합니다</li>
@@ -367,18 +367,18 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
                   <li><strong>브라우저 캐시 삭제:</strong> 개발자 도구에서 하드 리프레시 (Ctrl+Shift+R)</li>
                 </ol>
                 
-                <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
-                  <h5 className="font-semibold text-yellow-800 mb-1">현재 API 정보:</h5>
-                  <p className="text-yellow-700"><strong>Client ID:</strong> {import.meta.env.VITE_NAVER_CLIENT_ID || '설정되지 않음'}</p>
-                  <p className="text-yellow-700"><strong>웹 서비스 URL:</strong> http://localhost:3000 ✅ (등록됨)</p>
-                  <p className="text-yellow-700"><strong>Application:</strong> CodlabApp</p>
+                <div className="mt-4 p-3 rounded border" style={{ backgroundColor: '#CEF4E7', borderColor: '#30E8AB' }}>
+                  <h5 className="font-semibold mb-1" style={{ color: '#111827' }}>현재 API 정보:</h5>
+                  <p style={{ color: '#111827' }}><strong>Client ID:</strong> {import.meta.env.VITE_NAVER_CLIENT_ID || '설정되지 않음'}</p>
+                  <p style={{ color: '#111827' }}><strong>웹 서비스 URL:</strong> http://localhost:3000 ✅ (등록됨)</p>
+                  <p style={{ color: '#111827' }}><strong>Application:</strong> CodlabApp</p>
                 </div>
                 
-                <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-                  <h5 className="font-semibold text-blue-800 mb-1">✅ 확인된 설정:</h5>
-                  <p className="text-blue-700">• Client ID: 환경변수에서 로드됨</p>
-                  <p className="text-blue-700">• 웹 서비스 URL: http://localhost:3000 등록됨</p>
-                  <p className="text-blue-700">• Application: CodlabApp</p>
+                <div className="mt-3 p-3 rounded border" style={{ backgroundColor: '#F9FAF9', borderColor: '#CEF4E7' }}>
+                  <h5 className="font-semibold mb-1" style={{ color: '#111827' }}>✅ 확인된 설정:</h5>
+                  <p style={{ color: '#111827' }}>• Client ID: 환경변수에서 로드됨</p>
+                  <p style={{ color: '#111827' }}>• 웹 서비스 URL: http://localhost:3000 등록됨</p>
+                  <p style={{ color: '#111827' }}>• Application: CodlabApp</p>
                 </div>
               </div>
             </div>
@@ -387,7 +387,7 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
       )}
       
       {mapLoaded && !mapError && (
-        <div className="absolute top-4 left-4 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded text-sm">
+        <div className="absolute top-4 left-4 px-3 py-2 rounded text-sm" style={{ backgroundColor: '#CEF4E7', borderColor: '#30E8AB', color: '#111827' }}>
           ✅ 네이버 맵 로드 성공
         </div>
       )}

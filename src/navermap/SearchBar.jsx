@@ -32,11 +32,32 @@ const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false, onAut
           value={searchTerm}
           onChange={handleInputChange}
           placeholder="매장, 지역 검색"
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          style={{ 
+            borderColor: '#CEF4E7',
+            backgroundColor: '#F9FAF9',
+            color: '#111827'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = '#30E8AB';
+            e.target.style.ringColor = '#30E8AB';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#CEF4E7';
+          }}
         />
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          className="px-6 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+          style={{ 
+            backgroundColor: '#30E8AB'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#2BD4A0';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = '#30E8AB';
+          }}
         >
           검색
         </button>
@@ -47,9 +68,23 @@ const SearchBar = ({ onSearch, onCurrentLocation, locationLoading = false, onAut
         disabled={locationLoading}
         className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors flex items-center justify-center gap-2 ${
           locationLoading 
-            ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-            : 'bg-green-500 text-white hover:bg-green-600 focus:ring-green-500'
+            ? 'cursor-not-allowed' 
+            : ''
         }`}
+        style={{
+          backgroundColor: locationLoading ? '#CEF4E7' : '#30E8AB',
+          color: locationLoading ? '#111827' : 'white'
+        }}
+        onMouseEnter={(e) => {
+          if (!locationLoading) {
+            e.target.style.backgroundColor = '#2BD4A0';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!locationLoading) {
+            e.target.style.backgroundColor = '#30E8AB';
+          }
+        }}
       >
         {locationLoading ? (
           <>
