@@ -20,6 +20,7 @@ import Fillcanvas from './draw/fillcanvas.jsx'
 import EmotionDiary from './diary/emtiondiary.jsx'
 import EmotionDiaryList from './diary/EmotionDiaryList.jsx'
 import CounselingCenterPage from './pages/CounselingCenterPage.jsx'
+import Theme from './draw/theme.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/draw/person-analysis" element={<PersonAnalysis />} />
         <Route path="/draw/colorfill" element={<Colorfill />} />
         <Route path="/draw/fillcanvas" element={<Fillcanvas />} />
+        <Route path="/draw/theme" element={<Theme />} />
         <Route path="/diary/emotion" element={<EmotionDiary />} />
         <Route path="/diary/list" element={<EmotionDiaryList />} />
         <Route path="/counseling-center" element={<CounselingCenterPage />} />

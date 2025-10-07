@@ -91,6 +91,10 @@ function MainPage() {
     navigate('/draw/colorfill')   // 색칠하기 페이지로 이동
   }
 
+  const gotoTheme = () => {
+    navigate('/draw/theme')   // 테마 그리기 페이지로 이동
+  }
+
   const openChatbot = () => {
     setIsChatbotOpen(true)
   }
@@ -160,7 +164,7 @@ function MainPage() {
           <img src="/src/imgdata/icon/Painter.png" alt="색칠하기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
           색칠하기
         </button>
-        <button className='option'>
+        <button className='option' onClick={gotoTheme}>
           <img src="/src/imgdata/icon/drawcanvas.png" alt="테마그리기" style={{ width: '48px', height: '48px', marginRight: '20px' }} />
           테마그리기
         </button>

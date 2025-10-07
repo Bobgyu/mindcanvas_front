@@ -341,8 +341,8 @@ function Tree() {
           gap: '15px', 
           alignItems: 'center',
           backgroundColor: 'rgb(39, 192, 141)',
-          padding: '15px 20px',
-          borderRadius: '25px',
+          padding: '15px 40px',
+          borderRadius: '50px',
           boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
           zIndex: 100
         }}>

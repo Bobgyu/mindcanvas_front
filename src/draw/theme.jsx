@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
 import axios from 'axios'
 
-function Person() {
+function Theme() {
   const navigate = useNavigate()
   const canvasRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -10,48 +10,47 @@ function Person() {
   const [brushColor, setBrushColor] = useState('#000000')
   const [currentTool, setCurrentTool] = useState('brush')
   const [showPalette, setShowPalette] = useState(false)
+  const [showBrushSize, setShowBrushSize] = useState(false)
   const [customColor, setCustomColor] = useState('#000000')
-  const [selectedGender, setSelectedGender] = useState(null) // 성별 선택 상태
-  const [showGenderSelection, setShowGenderSelection] = useState(true) // 성별 선택 화면 표시
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false)
+  const [showCustomColorPicker, setShowCustomColorPicker] = useState(false)
+  const [zoom, setZoom] = useState(1)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
 
-  const colors = ['#000000', '#FFB6C1', '#FFC0CB', '#FFA07A', '#FFE4E1', '#F0E68C', '#DDA0DD', '#98FB98', '#87CEEB', '#F5DEB3']
+  const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB']
 
   const handleBack = () => {
-    if (showGenderSelection) {
-      navigate('/mainpage')
-    } else {
-      setShowGenderSelection(true)
-    }
-  }
-
-  const selectGender = (gender) => {
-    setSelectedGender(gender)
-    setShowGenderSelection(false)
+    navigate('/mainpage')
   }
 
   const startDrawing = (e) => {
-    setIsDrawing(true)
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    
-    ctx.beginPath()
-    ctx.moveTo(x, y)
+    if (e.button === 0) { // 왼쪽 마우스 버튼만 그리기
+      setIsDrawing(true)
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      const rect = canvas.getBoundingClientRect()
+      // 확대/이동을 고려한 내부 좌표
+      const x = (e.clientX - rect.left - panOffset.x) / zoom
+      const y = (e.clientY - rect.top - panOffset.y) / zoom
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+    } else if (e.button === 1 || e.button === 2) { // 가운데 또는 오른쪽 버튼은 팬
+      setIsPanning(true)
+      setLastPanPoint({ x: e.clientX, y: e.clientY })
+    }
   }
 
   const draw = (e) => {
     if (!isDrawing) return
-    
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    
+    // 확대/이동을 고려한 내부 좌표
+    const x = (e.clientX - rect.left - panOffset.x) / zoom
+    const y = (e.clientY - rect.top - panOffset.y) / zoom
+    // 경계 체크
+    if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) return
     if (currentTool === 'brush') {
       ctx.globalCompositeOperation = 'source-over'
       ctx.lineWidth = brushSize
@@ -71,12 +70,21 @@ function Person() {
   const handleMouseMove = (e) => {
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    
-    setCursorPos({ x, y })
+    const xScreen = e.clientX - rect.left
+    const yScreen = e.clientY - rect.top
+    const x = (xScreen - panOffset.x) / zoom
+    const y = (yScreen - panOffset.y) / zoom
+    setCursorPos({ x, y })           // 내부 좌표 (그리기용)
+    setCursorScreenPos({ x: xScreen, y: yScreen }) // 화면 좌표 (커서 렌더링용)
     setShowCursor(true)
-    draw(e)
+    if (isPanning) {
+      const deltaX = e.clientX - lastPanPoint.x
+      const deltaY = e.clientY - lastPanPoint.y
+      setPanOffset(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }))
+      setLastPanPoint({ x: e.clientX, y: e.clientY })
+    } else if (isDrawing) {
+      draw(e)
+    }
   }
 
   const handleMouseLeave = () => {
@@ -85,7 +93,15 @@ function Person() {
   }
 
   const stopDrawing = () => {
-    setIsDrawing(false)
+    if (isDrawing) {
+      setIsDrawing(false)
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      ctx.beginPath()
+    }
+    if (isPanning) {
+      setIsPanning(false)
+    }
   }
 
   const clearCanvas = () => {
@@ -97,7 +113,7 @@ function Person() {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
   }
 
-  const saveDrawingToBackend = async (imageData, analysisResult = null) => {
+  const saveDrawingToBackend = async (imageData) => {
     const token = localStorage.getItem('authToken');
     if (!token) {
       alert("로그인이 필요합니다.");
@@ -107,8 +123,7 @@ function Person() {
 
     try {
       const response = await axios.post('http://localhost:5000/api/drawings', {
-        image: imageData,
-        analysis_result: analysisResult
+        image: imageData
       }, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -144,57 +159,6 @@ function Person() {
     await saveDrawingToBackend(imageData);
   };
 
-  const handleAnalysisClick = () => {
-    setShowAnalysisModal(true);
-  };
-
-  const confirmAnalysis = async () => {
-    setShowAnalysisModal(false);
-    try {
-      setIsAnalyzing(true);
-      const canvas = canvasRef.current;
-      const imageData = canvas.toDataURL('image/png');
-      
-      // 백엔드 API 호출 (성별에 따라 다른 모델 사용)
-      const modelName = selectedGender === 'male' ? 'PersonM' : 'PersonF';
-      const analyzeResponse = await axios.post(`http://localhost:5000/api/predict/${modelName}`, {
-        image: imageData
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (analyzeResponse.data.success) {
-        const analysisResult = analyzeResponse.data.detections; // Person 모델은 detections를 반환
-        
-        // 분석 결과를 포함하여 그림 저장
-        const saved = await saveDrawingToBackend(imageData, analysisResult);
-        
-        if (saved) {
-          // 그린 그림을 로컬 스토리지에 저장
-          localStorage.setItem('drawnPersonImage', imageData);
-          localStorage.setItem('selectedGender', selectedGender);
-          // 분석 결과를 로컬 스토리지에 저장
-          localStorage.setItem('personAnalysisResult', JSON.stringify(analysisResult));
-          // 분석 페이지로 이동
-          navigate('/draw/person-analysis');
-        }
-      } else {
-        alert('분석에 실패했습니다: ' + analyzeResponse.data.error);
-      }
-    } catch (error) {
-      console.error('분석 오류:', error);
-      alert('분석 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const cancelAnalysis = () => {
-    setShowAnalysisModal(false);
-  };
-
   const selectColor = (color) => {
     setBrushColor(color)
     setShowPalette(false)
@@ -202,168 +166,77 @@ function Person() {
 
   const addCustomColor = () => {
     setBrushColor(customColor)
+    setShowCustomColorPicker(false)
     setShowPalette(false)
   }
 
   const selectBrushSize = (size) => {
     setBrushSize(size)
-    setShowPalette(false)
+    setShowBrushSize(false)
+  }
+
+  const handleWheel = (e) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? 0.9 : 1.1
+    const newZoom = Math.max(0.1, Math.min(5, zoom * delta))
+    setZoom(newZoom)
+  }
+
+  const resetZoom = () => {
+    setZoom(1)
+    setPanOffset({ x: 0, y: 0 })
+  }
+
+  const moveCanvas = (direction) => {
+    const moveDistance = 50
+    switch (direction) {
+      case 'up':
+        setPanOffset(prev => ({ ...prev, y: prev.y + moveDistance }))
+        break
+      case 'down':
+        setPanOffset(prev => ({ ...prev, y: prev.y - moveDistance }))
+        break
+      case 'left':
+        setPanOffset(prev => ({ ...prev, x: prev.x + moveDistance }))
+        break
+      case 'right':
+        setPanOffset(prev => ({ ...prev, x: prev.x - moveDistance }))
+        break
+    }
   }
 
   useEffect(() => {
-    if (!showGenderSelection) {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')
-      
-      // 캔버스 크기 설정
-      canvas.width = 400
-      canvas.height = 680
-      
-      // 배경색 설정
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      
-      // 기본 설정
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    
+    // 캔버스 크기 설정 (home.jsx와 동일한 크기로 고정)
+    canvas.width = 400
+    canvas.height = 680
+    
+    // 배경색 설정
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // 기본 설정
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+  }, [])
+
+  // 도구별 커서 스타일 생성
+  const getCursorStyle = () => {
+    if (currentTool === 'eraser') {
+      return { cursor: 'crosshair' }
+    } else if (currentTool === 'brush') {
+      return { cursor: 'crosshair' }
     }
-  }, [showGenderSelection])
+    return { cursor: 'crosshair' }
+  }
 
   // 커서 위치 추적을 위한 상태
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
+  const [cursorScreenPos, setCursorScreenPos] = useState({ x: 0, y: 0 })
   const [showCursor, setShowCursor] = useState(false)
 
-  // 성별 선택 화면
-  if (showGenderSelection) {
-    return (
-      <>
-        {/* 뒤로가기 */}
-        <div className='goback'>
-          <p onClick={handleBack} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-            <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
-          </p>
-        </div>
-
-        {/* 성별 선택 화면 */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          height: '58rem',
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          maxWidth: '29rem',
-          margin: '0 auto',
-          borderRadius: '1.5rem'
-        }}>
-          <div style={{
-            backgroundColor: '#CEF4E7',
-            padding: '40px',
-            borderRadius: '20px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-            textAlign: 'center',
-            maxWidth: '400px',
-            width: '100%'
-          }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '10px'
-            }}>
-              사람 그리기
-            </h2>
-            <p style={{
-              fontSize: '16px',
-              color: '#666',
-              marginBottom: '40px'
-            }}>
-              그릴 사람의 성별을 선택해주세요
-            </p>
-            
-            <div style={{
-              display: 'flex',
-              gap: '20px',
-              justifyContent: 'center'
-            }}>
-              {/* 남자 선택 버튼 */}
-              <button
-                onClick={() => selectGender('male')}
-                style={{
-                  padding: '20px 30px',
-                  backgroundColor: '#4A90E2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '15px',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(74, 144, 226, 0.3)',
-                  transition: 'all 0.3s ease',
-                  minWidth: '120px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#357ABD'
-                  e.target.style.transform = 'translateY(-2px)'
-                  e.target.style.boxShadow = '0 6px 20px rgba(74, 144, 226, 0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#4A90E2'
-                  e.target.style.transform = 'translateY(0)'
-                  e.target.style.boxShadow = '0 4px 15px rgba(74, 144, 226, 0.3)'
-                }}
-              >
-                <img src="/src/imgdata/icon/boy.png" alt="남자" style={{ width: '24px', height: '24px' }} />
-                남자
-              </button>
-
-              {/* 여자 선택 버튼 */}
-              <button
-                onClick={() => selectGender('female')}
-                style={{
-                  padding: '20px 30px',
-                  backgroundColor: '#E91E63',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '15px',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(233, 30, 99, 0.3)',
-                  transition: 'all 0.3s ease',
-                  minWidth: '120px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#C2185B'
-                  e.target.style.transform = 'translateY(-2px)'
-                  e.target.style.boxShadow = '0 6px 20px rgba(233, 30, 99, 0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#E91E63'
-                  e.target.style.transform = 'translateY(0)'
-                  e.target.style.boxShadow = '0 4px 15px rgba(233, 30, 99, 0.3)'
-                }}
-              >
-                <img src="/src/imgdata/icon/girl.png" alt="여자" style={{ width: '24px', height: '24px' }} />
-                여자
-              </button>
-            </div>
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  // 그리기 화면
   return (
     <>
       {/* 상단 저장 버튼 */}
@@ -412,13 +285,13 @@ function Person() {
         boxSizing: 'border-box',
         position: 'relative'
       }}>
-        {/* 성별 표시 */}
+        {/* 테마 그리기 표시 */}
         <div style={{
           position: 'fixed',
           top: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          backgroundColor: selectedGender === 'male' ? '#4A90E2' : '#E91E63',
+          backgroundColor: '#4A90E2',
           color: 'white',
           padding: '8px 16px',
           borderRadius: '20px',
@@ -426,8 +299,170 @@ function Person() {
           fontWeight: 'bold',
           zIndex: 100
         }}>
-          {selectedGender === 'male' ? '남자' : '여자'}
+          테마 그리기
         </div>
+
+        {/* 줌 컨트롤 */}
+        <div style={{
+          position: 'fixed',
+          top: '60px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '8px 12px',
+          borderRadius: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          zIndex: 100
+        }}>
+          <button 
+            onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
+            style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              border: '1px solid #ccc',
+              backgroundColor: '#f0f0f0',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}
+          >
+            -
+          </button>
+          <span style={{ fontSize: '12px', fontWeight: 'bold', minWidth: '50px', textAlign: 'center' }}>
+            {Math.round(zoom * 100)}%
+          </span>
+          <button 
+            onClick={() => setZoom(Math.min(5, zoom + 0.1))}
+            style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              border: '1px solid #ccc',
+              backgroundColor: '#f0f0f0',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}
+          >
+            +
+          </button>
+          <button 
+            onClick={resetZoom}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '15px',
+              border: '1px solid #ccc',
+              backgroundColor: '#f0f0f0',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}
+          >
+            리셋
+          </button>
+        </div>
+
+        {/* 네비게이션 컨트롤 (줌이 1보다 클 때만 표시) */}
+        {zoom > 1 && (
+          <div style={{
+            position: 'fixed',
+            top: '100px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '5px',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            padding: '8px',
+            borderRadius: '15px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            zIndex: 100
+          }}>
+            <button 
+              onClick={() => moveCanvas('up')}
+              style={{
+                width: '35px',
+                height: '35px',
+                borderRadius: '8px',
+                border: '1px solid #ccc',
+                backgroundColor: '#f0f0f0',
+                cursor: 'pointer',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="위로 이동"
+            >
+              ↑
+            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={() => moveCanvas('left')}
+                style={{
+                  width: '35px',
+                  height: '35px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="왼쪽으로 이동"
+              >
+                ←
+              </button>
+              <button 
+                onClick={() => moveCanvas('right')}
+                style={{
+                  width: '35px',
+                  height: '35px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f0f0f0',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="오른쪽으로 이동"
+              >
+                →
+              </button>
+            </div>
+            <button 
+              onClick={() => moveCanvas('down')}
+              style={{
+                width: '35px',
+                height: '35px',
+                borderRadius: '8px',
+                border: '1px solid #ccc',
+                backgroundColor: '#f0f0f0',
+                cursor: 'pointer',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="아래로 이동"
+            >
+              ↓
+            </button>
+          </div>
+        )}
 
         {/* 캔버스 */}
         <div style={{ 
@@ -436,32 +471,44 @@ function Person() {
           justifyContent: 'center',
           marginBottom: '30px',
           marginTop: '120px',
-          position: 'relative'
+          position: 'relative',
+          width: '400px',
+          height: '680px',
+          overflow: 'hidden'
         }}>
-          <canvas
-            ref={canvasRef}
-            onMouseDown={startDrawing}
-            onMouseMove={handleMouseMove}
-            onMouseUp={stopDrawing}
-            onMouseLeave={handleMouseLeave}
+          <div 
             style={{
-              border: '1px solid #000',
-              borderRadius: '10px',
-              cursor: 'none',
-              backgroundColor: '#CEF4E7',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+              transformOrigin: 'top left',
+              transition: 'transform 0.08s ease'
             }}
-          />
-          
-          {/* 커스텀 커서 */}
+          >
+            <canvas
+              ref={canvasRef}
+              onMouseDown={startDrawing}
+              onMouseMove={handleMouseMove}
+              onMouseUp={stopDrawing}
+              onMouseLeave={handleMouseLeave}
+              onWheel={handleWheel}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{
+                border: '1px solid #000',
+                borderRadius: '10px',
+                cursor: 'none',
+                backgroundColor: '#CEF4E7',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+              }}
+            />
+          </div>
+          {/* 커스텀 커서 (컨테이너 고정 좌표 위에 렌더) */}
           {showCursor && (
             <div
               style={{
                 position: 'absolute',
-                left: cursorPos.x - brushSize,
-                top: cursorPos.y - brushSize,
-                width: brushSize * 2,
-                height: brushSize * 2,
+                left: cursorScreenPos.x - brushSize / 2,
+                top: cursorScreenPos.y - brushSize / 2,
+                width: brushSize,
+                height: brushSize,
                 borderRadius: currentTool === 'eraser' ? '0%' : '50%',
                 border: `2px solid ${currentTool === 'eraser' ? 'red' : brushColor}`,
                 backgroundColor: 'transparent',
@@ -497,7 +544,7 @@ function Person() {
               height: '50px', 
               borderRadius: '50%', 
               border: currentTool === 'brush' ? '3px solid #3a9d1f' : '1px solid #ccc',
-              backgroundColor: currentTool === 'brush' ? '#e8f5e8' : 'white',
+              backgroundColor: currentTool === 'brush' ? '#e8f5e8' : '#F9FAF9',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -518,7 +565,7 @@ function Person() {
               height: '50px', 
               borderRadius: '50%', 
               border: currentTool === 'eraser' ? '3px solid #3a9d1f' : '1px solid #ccc',
-              backgroundColor: currentTool === 'eraser' ? '#e8f5e8' : 'white',
+              backgroundColor: currentTool === 'eraser' ? '#e8f5e8' : '#F9FAF9',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -572,7 +619,7 @@ function Person() {
                 minWidth: '240px',
                 maxWidth: '280px'
               }}>
-                {/* 기본 색상들 (사람에 적합한 색상) */}
+                {/* 기본 색상들 */}
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(5, 1fr)', 
@@ -598,8 +645,7 @@ function Person() {
                         e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)'
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = '#3a9d1f'
-                        e.target.style.transform = 'translateY(0)'
+                        e.target.style.transform = 'scale(1)'
                         e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
                       }}
                     />
@@ -662,29 +708,6 @@ function Person() {
               </div>
             )}
           </div>
-          
-          {/* 분석 버튼 */}
-          <button 
-            onClick={handleAnalysisClick}
-            disabled={isAnalyzing}
-            style={{ 
-              width: '50px', 
-              height: '50px', 
-              borderRadius: '50%', 
-              border: '1px solid #ccc',
-              backgroundColor: isAnalyzing ? '#f0f0f0' : '#CEF4E7',
-              cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-              opacity: isAnalyzing ? 0.6 : 1
-            }}
-          >
-            <img src="/src/imgdata/icon/IDEA.png" alt="분석" style={{ width: '32px', height: '32px' }} />
-          </button>
         </div>
         
         {/* 브러시 크기 표시 - 상단에 배치 */}
@@ -715,88 +738,11 @@ function Person() {
           />
         </div>
 
-        {/* 분석 확인 모달 */}
-        {showAnalysisModal && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              padding: '30px',
-              borderRadius: '15px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              textAlign: 'center',
-              maxWidth: '400px',
-              width: '90%'
-            }}>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                marginBottom: '20px',
-                color: '#333'
-              }}>
-                분석을 실시하시겠습니까?
-              </h3>
-              <p style={{
-                fontSize: '14px',
-                color: '#666',
-                marginBottom: '25px',
-                lineHeight: '1.5'
-              }}>
-                그림을 분석하여 심리 상태를 확인할 수 있습니다.
-              </p>
-              <div style={{
-                display: 'flex',
-                gap: '15px',
-                justifyContent: 'center'
-              }}>
-                <button
-                  onClick={cancelAnalysis}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#f0f0f0',
-                    color: '#333',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  취소
-                </button>
-                <button
-                  onClick={confirmAnalysis}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: 'rgb(39, 192, 141)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  분석하기
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
     </>
   )
 }
 
-export default Person
+export default Theme
+
+
