@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 function EmotionDiary() {
   const navigate = useNavigate()
@@ -29,39 +30,85 @@ function EmotionDiary() {
     setShowEmotionPicker(false)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedEmotion || !diaryText.trim()) {
       alert('감정을 선택하고 일기를 작성해주세요.')
       return
     }
 
-    // 일기 데이터 저장 (로컬 스토리지 또는 API 호출)
-    const diaryData = {
-      emotion: selectedEmotion,
-      text: diaryText,
-      date: new Date().toISOString().split('T')[0]
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('로그인이 필요합니다.')
+        navigate('/login')
+        return
+      }
+
+      // API로 감정일기 저장
+      const response = await axios.post('http://localhost:5000/api/emotion-diary', {
+        emotion: selectedEmotion.name,
+        emotion_id: selectedEmotion.id,
+        content: diaryText.trim()
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.data.success) {
+        alert('일기가 저장되었습니다!')
+        navigate('/mainpage')
+      } else {
+        alert('일기 저장에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('감정일기 저장 오류:', error)
+      if (error.response?.status === 401) {
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.')
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('userId')
+        localStorage.removeItem('username')
+        navigate('/login')
+      } else {
+        alert('일기 저장 중 오류가 발생했습니다.')
+      }
     }
-
-    // 로컬 스토리지에 저장
-    const existingDiaries = JSON.parse(localStorage.getItem('emotionDiaries') || '[]')
-    existingDiaries.push(diaryData)
-    localStorage.setItem('emotionDiaries', JSON.stringify(existingDiaries))
-
-    alert('일기가 저장되었습니다!')
-    navigate('/mainpage')
   }
 
   return (
-    <div className="emotion-diary-container">
+    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
       {/* 뒤로가기 버튼 */}
-      <div className="back-button-container">
-        <button className="back-button" onClick={handleBack}>
-          ← 뒤로가기
-        </button>
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        zIndex: 100
+      }}>
+        <p onClick={handleBack} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
+        </p>
+      </div>
+
+      {/* 마음일기 유형 표시 */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: '#4A90E2',
+        color: 'white',
+        padding: '8px 16px',
+        borderRadius: '20px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        zIndex: 100
+      }}>
+        마음일기
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="diary-content">
+      <main className="flex-grow p-6" style={{ marginTop: '60px' }}>
         {/* 감정 선택 영역 */}
         <div className="emotion-section">
           <div className="emotion-bubble">
@@ -138,59 +185,36 @@ function EmotionDiary() {
             작성완료
           </button>
         </div>
-      </div>
+      </main>
 
       <style>{`
-        .emotion-diary-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
-          position: relative;
-        }
-
-        .back-button-container {
-          position: absolute;
-          top: 20px;
-          left: 20px;
-          z-index: 10;
-        }
-
-        .back-button {
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          padding: 10px 20px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .back-button:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateX(-5px);
-        }
-
         .diary-content {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          min-height: 100vh;
-          gap: 30px;
-          padding: 60px 20px 20px;
+          gap: 20px;
         }
 
         .emotion-section {
           position: relative;
+          margin-bottom: 20px;
+        }
+
+        .diary-section {
+          margin-bottom: 20px;
+        }
+
+        .submit-section {
+          margin-top: 10px;
         }
 
         .emotion-bubble {
-          background: white;
-          border: 3px solid #333;
+          background: rgba(255, 255, 255, 0.9);
+          border: none;
           border-radius: 20px;
           padding: 20px 30px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           min-width: 300px;
           text-align: center;
         }
@@ -214,7 +238,7 @@ function EmotionDiary() {
         }
 
         .change-emotion-btn {
-          background: #4CAF50;
+          background: rgb(39, 192, 141) ;
           border: none;
           color: white;
           width: 30px;
@@ -226,7 +250,7 @@ function EmotionDiary() {
         }
 
         .change-emotion-btn:hover {
-          background: #45a049;
+          background: rgb(39, 192, 141) ;
           transform: scale(1.1);
         }
 
@@ -304,25 +328,14 @@ function EmotionDiary() {
         }
 
         .diary-bubble {
-          background: #90EE90;
-          border: 3px solid #333;
+          background: #30E8AB;
+          border: none;
           border-radius: 20px;
           padding: 25px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           position: relative;
         }
 
-        .diary-bubble::after {
-          content: '';
-          position: absolute;
-          bottom: -15px;
-          left: 50px;
-          width: 0;
-          height: 0;
-          border-left: 15px solid transparent;
-          border-right: 15px solid transparent;
-          border-top: 15px solid #90EE90;
-        }
 
         .diary-header {
           margin-bottom: 20px;
@@ -356,23 +369,16 @@ function EmotionDiary() {
         }
 
         .submit-button {
-          background: white;
-          border: 3px solid #333;
-          color: #333;
-          padding: 15px 40px;
-          border-radius: 25px;
+          padding: 10px 20px;
+          background-color: rgb(39, 192, 141);
+          color: white;
+          border: none;
+          border-radius: 20px;
           cursor: pointer;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: bold;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .submit-button:hover {
-          background: #f0f0f0;
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
 
         @media (max-width: 768px) {
           .diary-content {

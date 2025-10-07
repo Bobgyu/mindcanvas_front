@@ -88,20 +88,20 @@ function Home() {
   }
 
   const saveDrawingToBackend = async (imageData, analysisResult = null) => {
-    const userId = localStorage.getItem('userId'); // 로컬 스토리지에서 userId 가져오기
-    if (!userId) {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
       alert("로그인이 필요합니다.");
       navigate('/login');
-      return false; // userId가 없으면 저장하지 않고 함수 종료
+      return false;
     }
 
     try {
       const response = await axios.post('http://localhost:5000/api/drawings', {
-        user_id: parseInt(userId),
         image: imageData,
         analysis_result: analysisResult
       }, {
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -115,7 +115,15 @@ function Home() {
       }
     } catch (error) {
       console.error("그림 저장 API 오류:", error);
-      alert("그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+      if (error.response?.status === 401) {
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        navigate('/login');
+      } else {
+        alert("그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+      }
       return false;
     }
   };
