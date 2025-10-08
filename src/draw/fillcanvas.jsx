@@ -52,6 +52,19 @@ function Fillcanvas() {
     }
   }, [selectedImage])
 
+  // 캔버스 최적화 설정
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (canvas) {
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        // 캔버스 성능 최적화
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+      }
+    }
+  }, [])
+
   const loadImageToCanvas = () => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
@@ -144,6 +157,10 @@ function Fillcanvas() {
   }
 
   const startDrawing = (e) => {
+    // passive 이벤트 리스너 문제 해결
+    if (e.cancelable) {
+      e.preventDefault()
+    }
     if (e.button === 0) { // 왼쪽 마우스 버튼만 그리기
       setIsDrawing(true)
       draw(e)
@@ -155,17 +172,30 @@ function Fillcanvas() {
 
   const draw = (e) => {
     if (!isDrawing) return
+    // passive 이벤트 리스너 문제 해결
+    if (e.cancelable) {
+      e.preventDefault()
+    }
 
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const rect = canvas.getBoundingClientRect()
     
-    // 캔버스 내부 좌표로 변환 (줌과 팬 고려)
-    const x = (e.clientX - rect.left - panOffset.x) / zoom
-    const y = (e.clientY - rect.top - panOffset.y) / zoom
+    // 캔버스 중심점 기준으로 좌표 계산
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    
+    // 마우스 위치를 캔버스 중심점 기준으로 변환
+    const mouseX = e.clientX - centerX
+    const mouseY = e.clientY - centerY
+    
+    // 줌과 팬을 고려한 실제 캔버스 좌표 계산
+    const x = (mouseX - panOffset.x) / zoom + canvas.width / 2
+    const y = (mouseY - panOffset.y) / zoom + canvas.height / 2
 
-    // 캔버스 경계 체크
-    if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) {
+    // 캔버스 경계 체크를 더 관대하게 설정 (브러시 크기만큼 여유를 둠)
+    const margin = brushSize
+    if (x < -margin || x >= canvas.width + margin || y < -margin || y >= canvas.height + margin) {
       return
     }
 
@@ -234,14 +264,25 @@ function Fillcanvas() {
   }
 
   const handleMouseMove = (e) => {
+    // passive 이벤트 리스너 문제 해결
+    if (e.cancelable) {
+      e.preventDefault()
+    }
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
     
-    // 커서 위치는 캔버스 내부 좌표로 설정 (draw 함수와 동일한 계산)
-    const canvasX = (x - panOffset.x) / zoom
-    const canvasY = (y - panOffset.y) / zoom
+    // 캔버스 중심점 기준으로 좌표 계산
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    
+    // 마우스 위치를 캔버스 중심점 기준으로 변환
+    const mouseX = e.clientX - centerX
+    const mouseY = e.clientY - centerY
+    
+    // 줌과 팬을 고려한 실제 캔버스 좌표 계산
+    const canvasX = (mouseX - panOffset.x) / zoom + canvas.width / 2
+    const canvasY = (mouseY - panOffset.y) / zoom + canvas.height / 2
+    
     setCursorPos({ x: canvasX, y: canvasY })
     setShowCursor(true)
     
@@ -259,9 +300,30 @@ function Fillcanvas() {
   }
 
   const handleWheel = (e) => {
-    e.preventDefault()
+    // passive 이벤트 리스너 문제 해결
+    if (e.cancelable) {
+      e.preventDefault()
+    }
+    
     const delta = e.deltaY > 0 ? 0.9 : 1.1
     const newZoom = Math.max(0.1, Math.min(5, zoom * delta))
+    
+    // 줌 중심점을 마우스 위치로 설정
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    
+    const mouseX = e.clientX - centerX
+    const mouseY = e.clientY - centerY
+    
+    // 줌 중심점을 고려한 팬 오프셋 조정
+    const zoomRatio = newZoom / zoom
+    setPanOffset(prev => ({
+      x: prev.x + mouseX * (1 - zoomRatio),
+      y: prev.y + mouseY * (1 - zoomRatio)
+    }))
+    
     setZoom(newZoom)
   }
 
@@ -446,6 +508,9 @@ function Fillcanvas() {
               transform: `scale(${zoom}) translate(${panOffset.x / zoom}px, ${panOffset.y / zoom}px)`,
               transformOrigin: 'center center'
             }}
+            onMouseDown={(e) => e.cancelable && e.preventDefault()}
+            onMouseMove={(e) => e.cancelable && e.preventDefault()}
+            onMouseUp={(e) => e.cancelable && e.preventDefault()}
           >
             <canvas
               ref={canvasRef}
@@ -456,12 +521,16 @@ function Fillcanvas() {
               onMouseLeave={handleMouseLeave}
               onWheel={handleWheel}
               onContextMenu={(e) => e.preventDefault()}
+              onPointerDown={startDrawing}
+              onPointerMove={handleMouseMove}
+              onPointerUp={stopDrawing}
+              onPointerLeave={handleMouseLeave}
               style={{
                 width: canvasSize.width,
                 height: canvasSize.height,
-                cursor: 'none'
+                cursor: 'none',
+                touchAction: 'none'
               }}
-              willReadFrequently={true}
             />
             
             {/* 커스텀 커서 */}
@@ -478,7 +547,8 @@ function Fillcanvas() {
                   backgroundColor: 'transparent',
                   pointerEvents: 'none',
                   zIndex: 10,
-                  transition: 'none'
+                  transition: 'none',
+                  transform: `scale(${1/zoom})` // 줌에 반비례하여 커서 크기 조정
                 }}
               />
             )}
@@ -547,7 +617,7 @@ function Fillcanvas() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .fillcanvas-container {
           min-height: 100vh;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

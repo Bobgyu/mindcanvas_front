@@ -63,59 +63,73 @@ function Colorfill() {
   }
 
   return (
-    <div className="colorfill-container">
-      <div className="colorfill-header">
-        <button className="back-button" onClick={goBack}>
-          ← 뒤로가기
-        </button>
-        <h1>색칠하기 갤러리</h1>
-        <p>색칠하고 싶은 그림을 선택해주세요</p>
+    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col overflow-hidden bg-[rgb(206,244,231)]">
+      {/* 뒤로가기 버튼 */}
+      <div className="fixed top-5 left-5 z-[100]">
+        <p onClick={goBack} className="cursor-pointer flex items-center">
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" className="w-5 h-5" />
+        </p>
       </div>
 
-      <div className="gallery-grid">
-        {colorImages.map((image) => (
-          <div 
-            key={image.id} 
-            className="gallery-item"
-            onClick={() => selectImage(image)}
-          >
-            <div className="image-container">
-              <img 
-                src={`/src/imgdata/colorimg/${image.filename}`}
-                alt={image.name}
-                className="gallery-image"
-              />
-              <div className="image-overlay">
-                <div className="image-info">
-                  <h3>{image.name}</h3>
-                  <p>{image.description}</p>
-                  <button className="select-button">선택하기</button>
+      {/* 색칠하기 갤러리 표시 */}
+      <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-[#4A90E2] text-white px-4 py-2 rounded-[20px] text-sm font-bold z-[100]">
+        색칠하기 갤러리
+      </div>
+
+      {/* 안내 문구 */}
+      <div className="fixed top-[70px] left-1/2 transform -translate-x-1/2 text-[#333] text-xs font-normal z-[100] text-center">
+        색칠하고 싶은 그림을 선택하세요.
+      </div>
+
+      {/* 메인 컨텐츠 */}
+      <main className="flex-grow p-6 overflow-y-auto scrollbar-hide mt-[100px]">
+        <div className="grid grid-cols-1 gap-6 p-0 max-w-[90%] mx-auto">
+          {colorImages.map((image) => (
+            <div 
+              key={image.id} 
+              className="cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+              onClick={() => selectImage(image)}
+            >
+              <div className="relative rounded-[15px] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] bg-white">
+                <img 
+                  src={`/src/imgdata/colorimg/${image.filename}`}
+                  alt={image.name}
+                  className="w-full h-[200px] object-cover object-[top_20%] transition-transform duration-300 hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 transition-opacity duration-300 hover:opacity-100">
+                  <div className="text-center text-white p-2.5">
+                    <h3 className="text-sm font-bold mb-1">{image.name}</h3>
+                    <p className="text-xs mb-2 opacity-90 leading-tight">{image.description}</p>
+                    <button className="px-3 py-1.5 bg-[rgb(39,192,141)] text-white border-none rounded-[15px] cursor-pointer text-xs transition-all duration-300 hover:bg-[rgb(50,220,160)] hover:scale-105">
+                      선택하기
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </main>
 
       {selectedImage && (
-        <div className="selected-image-modal">
-          <div className="modal-content">
-            <h2>{selectedImage.name}</h2>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[1000]">
+          <div className="bg-white rounded-[20px] p-5 max-w-[400px] w-[90%] text-center animate-[modalSlideIn_0.3s_ease]">
+            <h2 className="text-[#333] mb-4 text-xl">{selectedImage.name}</h2>
             <img 
               src={`/src/imgdata/colorimg/${selectedImage.filename}`}
               alt={selectedImage.name}
-              className="modal-image"
+              className="w-full max-h-[200px] object-cover rounded-[10px] mb-2.5"
             />
-            <p>{selectedImage.description}</p>
-            <div className="modal-buttons">
+            <p className="text-[#666] mb-5 leading-[1.4] text-sm">{selectedImage.description}</p>
+            <div className="flex gap-2.5 justify-center">
               <button 
-                className="start-coloring"
+                className="bg-[#4CAF50] border-none text-white px-4 py-2 rounded-[20px] cursor-pointer text-sm transition-all duration-300 hover:bg-[#45a049] hover:scale-105"
                 onClick={() => startColoring(selectedImage)}
               >
                 색칠하기 시작
               </button>
               <button 
-                className="close-modal"
+                className="bg-[#f44336] border-none text-white px-4 py-2 rounded-[20px] cursor-pointer text-sm transition-all duration-300 hover:bg-[#da190b] hover:scale-105"
                 onClick={() => setSelectedImage(null)}
               >
                 닫기
@@ -126,157 +140,26 @@ function Colorfill() {
       )}
 
       <style>{`
-        .colorfill-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
+        .scrollbar-hide {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
         }
-
-        .colorfill-header {
-          text-align: center;
-          margin-bottom: 30px;
-          color: white;
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          width: 6px;
         }
-
-        .back-button {
-          position: absolute;
-          left: 20px;
-          top: 20px;
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          padding: 10px 20px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
+        
+        .scrollbar-hide::-webkit-scrollbar-track {
+          background: transparent;
         }
-
-        .back-button:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateX(-5px);
+        
+        .scrollbar-hide::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
         }
-
-        .colorfill-header h1 {
-          font-size: 2.5rem;
-          margin: 20px 0 10px 0;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .colorfill-header p {
-          font-size: 1.2rem;
-          opacity: 0.9;
-        }
-
-        .gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 30px;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 20px;
-        }
-
-        .gallery-item {
-          cursor: pointer;
-          transition: transform 0.3s ease;
-        }
-
-        .gallery-item:hover {
-          transform: translateY(-10px);
-        }
-
-        .image-container {
-          position: relative;
-          border-radius: 15px;
-          overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-          background: white;
-        }
-
-        .gallery-image {
-          width: 100%;
-          height: 250px;
-          object-fit: cover;
-          transition: transform 0.3s ease;
-        }
-
-        .gallery-item:hover .gallery-image {
-          transform: scale(1.1);
-        }
-
-        .image-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-
-        .gallery-item:hover .image-overlay {
-          opacity: 1;
-        }
-
-        .image-info {
-          text-align: center;
-          color: white;
-          padding: 20px;
-        }
-
-        .image-info h3 {
-          font-size: 1.5rem;
-          margin-bottom: 10px;
-        }
-
-        .image-info p {
-          font-size: 0.9rem;
-          margin-bottom: 15px;
-          opacity: 0.9;
-        }
-
-        .select-button {
-          background: #ff6b6b;
-          border: none;
-          color: white;
-          padding: 10px 20px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .select-button:hover {
-          background: #ff5252;
-          transform: scale(1.05);
-        }
-
-        .selected-image-modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-content {
-          background: white;
-          border-radius: 20px;
-          padding: 30px;
-          max-width: 500px;
-          width: 90%;
-          text-align: center;
-          animation: modalSlideIn 0.3s ease;
+        
+        .scrollbar-hide::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.3);
         }
 
         @keyframes modalSlideIn {
@@ -287,82 +170,6 @@ function Colorfill() {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-
-        .modal-content h2 {
-          color: #333;
-          margin-bottom: 20px;
-        }
-
-        .modal-image {
-          width: 100%;
-          max-height: 300px;
-          object-fit: cover;
-          border-radius: 10px;
-          margin-bottom: 15px;
-        }
-
-        .modal-content p {
-          color: #666;
-          margin-bottom: 25px;
-          line-height: 1.6;
-        }
-
-        .modal-buttons {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-        }
-
-        .start-coloring {
-          background: #4CAF50;
-          border: none;
-          color: white;
-          padding: 12px 25px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .start-coloring:hover {
-          background: #45a049;
-          transform: scale(1.05);
-        }
-
-        .close-modal {
-          background: #f44336;
-          border: none;
-          color: white;
-          padding: 12px 25px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .close-modal:hover {
-          background: #da190b;
-          transform: scale(1.05);
-        }
-
-        @media (max-width: 768px) {
-          .gallery-grid {
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            padding: 0 10px;
-          }
-
-          .colorfill-header h1 {
-            font-size: 2rem;
-          }
-
-          .back-button {
-            position: relative;
-            left: auto;
-            top: auto;
-            margin-bottom: 20px;
           }
         }
       `}</style>
