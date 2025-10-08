@@ -63,53 +63,43 @@ function Colorfill() {
   }
 
   return (
-    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col overflow-hidden bg-[rgb(206,244,231)]">
-      {/* 뒤로가기 버튼 */}
-      <div className="fixed top-5 left-5 z-[100]">
-        <p onClick={goBack} className="cursor-pointer flex items-center">
-          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" className="w-5 h-5" />
-        </p>
+    <div className="colorfill-container">
+      <div className="colorfill-header">
+        <button className="back-button" onClick={goBack}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
+        </button>
+        <h1>색칠하기 갤러리</h1>
+        <p>색칠하고 싶은 그림을 선택해주세요</p>
       </div>
 
-      {/* 색칠하기 갤러리 표시 */}
-      <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-[#4A90E2] text-white px-4 py-2 rounded-[20px] text-sm font-bold z-[100]">
-        색칠하기 갤러리
-      </div>
-
-      {/* 안내 문구 */}
-      <div className="fixed top-[70px] left-1/2 transform -translate-x-1/2 text-[#333] text-xs font-normal z-[100] text-center">
-        색칠하고 싶은 그림을 선택하세요.
-      </div>
-
-      {/* 메인 컨텐츠 */}
-      <main className="flex-grow p-6 overflow-y-auto scrollbar-hide mt-[100px]">
-        <div className="grid grid-cols-1 gap-6 p-0 max-w-[90%] mx-auto">
-          {colorImages.map((image) => (
-            <div 
-              key={image.id} 
-              className="cursor-pointer transition-transform duration-300 hover:-translate-y-1"
-              onClick={() => selectImage(image)}
-            >
-              <div className="relative rounded-[15px] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.2)] bg-white">
-                <img 
-                  src={`/src/imgdata/colorimg/${image.filename}`}
-                  alt={image.name}
-                  className="w-full h-[200px] object-cover object-[top_20%] transition-transform duration-300 hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 transition-opacity duration-300 hover:opacity-100">
-                  <div className="text-center text-white p-2.5">
-                    <h3 className="text-sm font-bold mb-1">{image.name}</h3>
-                    <p className="text-xs mb-2 opacity-90 leading-tight">{image.description}</p>
-                    <button className="px-3 py-1.5 bg-[rgb(39,192,141)] text-white border-none rounded-[15px] cursor-pointer text-xs transition-all duration-300 hover:bg-[rgb(50,220,160)] hover:scale-105">
-                      선택하기
-                    </button>
+      <div className="gallery-wrapper">
+        <div className="scrollable-content">
+          <div className="gallery-grid">
+            {colorImages.map((image) => (
+              <div 
+                key={image.id} 
+                className="gallery-item"
+                onClick={() => selectImage(image)}
+              >
+                <div className="image-container">
+                  <img 
+                    src={`/src/imgdata/colorimg/${image.filename}`}
+                    alt={image.name}
+                    className="gallery-image"
+                  />
+                  <div className="image-overlay">
+                    <div className="image-info">
+                      <h3>{image.name}</h3>
+                      <p>{image.description}</p>
+                      <button className="select-button">선택하기</button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </main>
+      </div>
 
       {selectedImage && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[1000]">
@@ -140,26 +130,222 @@ function Colorfill() {
       )}
 
       <style>{`
-        .scrollbar-hide {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        .colorfill-container {
+          height: 880px;
+          background: linear-gradient(135deg, rgb(39, 192, 141) 0%, #30E8AB 100%);
+          padding: 15px;
+          border-radius: 25px;
+          margin: 20px;
+          overflow: hidden;
+          box-sizing: border-box;
+          max-width: calc(100vw - 60px);
+          position: relative;
+          clip-path: inset(0);
         }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-          width: 6px;
+
+        .colorfill-container::-webkit-scrollbar {
+          width: 8px;
         }
-        
-        .scrollbar-hide::-webkit-scrollbar-track {
-          background: transparent;
+
+        .colorfill-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
         }
-        
-        .scrollbar-hide::-webkit-scrollbar-thumb {
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 3px;
+
+        .colorfill-container::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 10px;
         }
-        
-        .scrollbar-hide::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 0, 0, 0.3);
+
+        .colorfill-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
+        .gallery-wrapper {
+          width: 100%;
+          height: 720px;
+          overflow-y: auto;
+          position: relative;
+          border-radius: 15px;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 10px;
+          box-sizing: border-box;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
+        .scrollable-content {
+          height: auto;
+          overflow: visible;
+          padding: 0;
+          margin: 0;
+          width: 100%;
+        }
+
+        .scrollable-content::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 10px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
+        .colorfill-header {
+          text-align: center;
+          margin-bottom: 10px;
+          color: white;
+          position: sticky;
+          top: 0;
+          background: linear-gradient(135deg, rgb(39, 192, 141) 0%, #30E8AB 100%);
+          padding: 10px 0;
+          z-index: 10;
+          border-radius: 20px;
+          margin: 0 0 10px 0;
+        }
+
+        .back-button {
+          position: absolute;
+          left: 0px;
+          top: 0px;
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 25px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: all 0.3s ease;
+        }
+
+        .colorfill-header h1 {
+          font-size: 2.2rem;
+          margin: 20px 0 10px 0;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .colorfill-header p {
+          font-size: 1.2rem;
+          opacity: 0.9;
+        }
+
+        .gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 8px;
+          max-width: 100%;
+          margin: 0;
+          padding: 0;
+          padding-bottom: 15px;
+          height: fit-content;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .gallery-item {
+          cursor: pointer;
+          transition: transform 0.3s ease;
+          overflow: hidden;
+          border-radius: 10px;
+        }
+
+        .gallery-item:hover {
+          transform: translateY(-10px);
+        }
+
+        .image-container {
+          position: relative;
+          border-radius: 25px;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          background: white;
+        }
+
+        .gallery-image {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-image {
+          transform: scale(1.1);
+        }
+
+        .image-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .image-overlay {
+          opacity: 1;
+        }
+
+        .image-info {
+          text-align: center;
+          color: white;
+          padding: 20px;
+        }
+
+        .image-info h3 {
+          font-size: 1.5rem;
+          margin-bottom: 10px;
+        }
+
+        .image-info p {
+          font-size: 0.9rem;
+          margin-bottom: 15px;
+          opacity: 0.9;
+        }
+
+        .select-button {
+          background: rgb(39, 192, 141);
+          border: none;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 25px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: all 0.3s ease;
+        }
+
+        .select-button:hover {
+          background: #30E8AB;
+          transform: scale(1.05);
         }
 
         @keyframes modalSlideIn {
@@ -170,6 +356,25 @@ function Colorfill() {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .gallery-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 0 10px;
+          }
+
+          .colorfill-header h1 {
+            font-size: 2rem;
+          }
+
+          .back-button {
+            position: relative;
+            left: auto;
+            top: auto;
+            margin-bottom: 20px;
           }
         }
       `}</style>
