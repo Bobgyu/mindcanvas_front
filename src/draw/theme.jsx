@@ -17,8 +17,38 @@ function Theme() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
+  const [currentTheme, setCurrentTheme] = useState('')
 
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB']
+
+  // 심리케어 관련 그림 주제들
+  const psychologicalThemes = [
+    '나의 안전한 공간',
+    '행복한 기억',
+    '내 마음의 색깔',
+    '평화로운 자연',
+    '소중한 사람들',
+    '꿈과 희망',
+    '감사한 순간',
+    '성장하는 나',
+    '위로받는 곳',
+    '새로운 시작',
+    '사랑하는 마음',
+    '힐링하는 시간',
+    '자신감 있는 나',
+    '따뜻한 추억',
+    '미래의 나'
+  ]
+
+  // 주간 테마 설정 함수
+  const getWeeklyTheme = () => {
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const daysSinceStart = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24))
+    const weekNumber = Math.floor(daysSinceStart / 7)
+    const themeIndex = weekNumber % psychologicalThemes.length
+    return psychologicalThemes[themeIndex]
+  }
 
   const handleBack = () => {
     navigate('/mainpage')
@@ -220,6 +250,9 @@ function Theme() {
     // 기본 설정
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
+    
+    // 주간 테마 설정
+    setCurrentTheme(getWeeklyTheme())
   }, [])
 
   // 도구별 커서 스타일 생성
@@ -302,82 +335,136 @@ function Theme() {
           테마 그리기
         </div>
 
-        {/* 줌 컨트롤 */}
+
+
+        {/* 캔버스 위쪽 컨트롤 영역 */}
         <div style={{
-          position: 'fixed',
-          top: '60px',
-          left: '50%',
-          transform: 'translateX(-50%)',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '8px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          padding: '8px 12px',
-          borderRadius: '20px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          zIndex: 100
+          marginBottom: '10px',
+          marginTop: '50px',
+          width: '100%',
+          maxWidth: '400px'
         }}>
-          <button 
-            onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
-            style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              border: '1px solid #ccc',
-              backgroundColor: '#f0f0f0',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}
-          >
-            -
-          </button>
-          <span style={{ fontSize: '12px', fontWeight: 'bold', minWidth: '50px', textAlign: 'center' }}>
-            {Math.round(zoom * 100)}%
-          </span>
-          <button 
-            onClick={() => setZoom(Math.min(5, zoom + 0.1))}
-            style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              border: '1px solid #ccc',
-              backgroundColor: '#f0f0f0',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}
-          >
-            +
-          </button>
-          <button 
-            onClick={resetZoom}
-            style={{
-              padding: '4px 8px',
-              borderRadius: '15px',
-              border: '1px solid #ccc',
-              backgroundColor: '#f0f0f0',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: 'bold'
-            }}
-          >
-            리셋
-          </button>
+          {/* 테마 표시 공간 */}
+          <div style={{ 
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              flex: 1,
+              padding: '8px 16px',
+              border: '2px solid #667eea',
+              borderRadius: '16px',
+              fontSize: '13px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              color: '#4a5568',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.15)',
+              borderStyle: 'dashed',
+              maxWidth: '200px',
+              gap: '8px'
+            }}>
+              <span style={{ 
+                fontSize: '13px', 
+                fontWeight: 'bold', 
+                color: '#667eea'
+              }}>
+                테마:
+              </span>
+              <span>
+                {currentTheme}
+              </span>
+            </div>
+          </div>
+          
+          {/* 우측 줌 컨트롤 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+            padding: '8px 12px',
+            borderRadius: '20px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            zIndex: 100
+          }}>
+            <button 
+              onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                border: '1px solid rgba(204, 204, 204, 0.5)',
+                backgroundColor: 'rgba(240, 240, 240, 0.5)',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold'
+              }}
+            >
+              -
+            </button>
+            <span style={{ fontSize: '12px', fontWeight: 'bold', minWidth: '50px', textAlign: 'center', color: '#333' }}>
+              {Math.round(zoom * 100)}%
+            </span>
+            <button 
+              onClick={() => setZoom(Math.min(5, zoom + 0.1))}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                border: '1px solid rgba(204, 204, 204, 0.5)',
+                backgroundColor: 'rgba(240, 240, 240, 0.5)',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold'
+              }}
+            >
+              +
+            </button>
+            <button 
+              onClick={resetZoom}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '15px',
+                border: '1px solid rgba(204, 204, 204, 0.5)',
+                backgroundColor: 'rgba(240, 240, 240, 0.5)',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}
+            >
+              리셋
+            </button>
+          </div>
         </div>
 
-        {/* 네비게이션 컨트롤 (줌이 1보다 클 때만 표시) */}
-        {zoom > 1 && (
+        {/* 캔버스 */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          marginBottom: '30px',
+          position: 'relative',
+          width: '400px',
+          height: '680px',
+          overflow: 'hidden'
+        }}>
+          {/* 네비게이션 컨트롤 (캔버스 우측 상단에 겹쳐서 배치) */}
           <div style={{
-            position: 'fixed',
-            top: '100px',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: '5px',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
             padding: '8px',
             borderRadius: '15px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
@@ -389,8 +476,8 @@ function Theme() {
                 width: '35px',
                 height: '35px',
                 borderRadius: '8px',
-                border: '1px solid #ccc',
-                backgroundColor: '#f0f0f0',
+                border: '1px solid rgba(204, 204, 204, 0.5)',
+                backgroundColor: 'rgba(240, 240, 240, 0.5)',
                 cursor: 'pointer',
                 fontSize: '18px',
                 fontWeight: 'bold',
@@ -409,8 +496,8 @@ function Theme() {
                   width: '35px',
                   height: '35px',
                   borderRadius: '8px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
+                  border: '1px solid rgba(204, 204, 204, 0.5)',
+                  backgroundColor: 'rgba(240, 240, 240, 0.5)',
                   cursor: 'pointer',
                   fontSize: '18px',
                   fontWeight: 'bold',
@@ -428,8 +515,8 @@ function Theme() {
                   width: '35px',
                   height: '35px',
                   borderRadius: '8px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#f0f0f0',
+                  border: '1px solid rgba(204, 204, 204, 0.5)',
+                  backgroundColor: 'rgba(240, 240, 240, 0.5)',
                   cursor: 'pointer',
                   fontSize: '18px',
                   fontWeight: 'bold',
@@ -448,8 +535,8 @@ function Theme() {
                 width: '35px',
                 height: '35px',
                 borderRadius: '8px',
-                border: '1px solid #ccc',
-                backgroundColor: '#f0f0f0',
+                border: '1px solid rgba(204, 204, 204, 0.5)',
+                backgroundColor: 'rgba(240, 240, 240, 0.5)',
                 cursor: 'pointer',
                 fontSize: '18px',
                 fontWeight: 'bold',
@@ -462,20 +549,6 @@ function Theme() {
               ↓
             </button>
           </div>
-        )}
-
-        {/* 캔버스 */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          marginBottom: '30px',
-          marginTop: '120px',
-          position: 'relative',
-          width: '400px',
-          height: '680px',
-          overflow: 'hidden'
-        }}>
           <div 
             style={{
               transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
@@ -537,25 +610,116 @@ function Theme() {
           zIndex: 100
         }}>
           {/* 붓 버튼 */}
-          <button 
-            onClick={() => setCurrentTool('brush')}
-            style={{ 
-              width: '50px', 
-              height: '50px', 
-              borderRadius: '50%', 
-              border: currentTool === 'brush' ? '3px solid #3a9d1f' : '1px solid #ccc',
-              backgroundColor: currentTool === 'brush' ? '#e8f5e8' : '#F9FAF9',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-            }}
-          >
-            <img src="/src/imgdata/icon/PAINTBRUSH.png" alt="붓" style={{ width: '32px', height: '32px' }} />
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => {
+                setCurrentTool('brush')
+                setShowBrushSize(!showBrushSize)
+                setShowPalette(false)
+              }}
+              style={{ 
+                width: '50px', 
+                height: '50px', 
+                borderRadius: '50%', 
+                border: currentTool === 'brush' ? '3px solid #3a9d1f' : '1px solid #ccc',
+                backgroundColor: currentTool === 'brush' ? '#e8f5e8' : '#F9FAF9',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+              }}
+            >
+              <img src="/src/imgdata/icon/PAINTBRUSH.png" alt="붓" style={{ width: '32px', height: '32px' }} />
+            </button>
+            
+            {/* 브러시 크기 드롭다운 */}
+            {showBrushSize && (
+              <div style={{
+                position: 'absolute',
+                bottom: '70px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: '#F9FAF9',
+                border: '1px solid #ccc',
+                borderRadius: '10px',
+                padding: '15px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                zIndex: 200,
+                minWidth: '200px'
+              }}>
+                <div style={{ 
+                  fontSize: '14px', 
+                  fontWeight: 'bold', 
+                  textAlign: 'center',
+                  color: '#333'
+                }}>
+                  브러시 크기: {brushSize}px
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="20" 
+                  value={brushSize} 
+                  onChange={(e) => setBrushSize(e.target.value)}
+                  style={{ 
+                    width: '100%',
+                    height: '6px',
+                    borderRadius: '3px',
+                    background: '#ddd',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                />
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(4, 1fr)', 
+                  gap: '8px',
+                  justifyItems: 'center'
+                }}>
+                  {[1, 3, 5, 8, 10, 12, 15, 20].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setBrushSize(size)
+                        setShowBrushSize(false)
+                      }}
+                      style={{
+                        width: '35px',
+                        height: '35px',
+                        borderRadius: '50%',
+                        border: brushSize === size ? '3px solid #3a9d1f' : '2px solid #ddd',
+                        backgroundColor: brushSize === size ? '#e8f5e8' : '#fff',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = 'scale(1.1)'
+                        e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'scale(1)'
+                        e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           
           {/* 지우개 버튼 */}
           <button 
@@ -710,33 +874,6 @@ function Theme() {
           </div>
         </div>
         
-        {/* 브러시 크기 표시 - 상단에 배치 */}
-        <div style={{ 
-          position: 'fixed',
-          top: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '12px', 
-          color: '#666',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          padding: '8px 15px',
-          borderRadius: '20px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          zIndex: 100
-        }}>
-          <span>브러시: {brushSize}px</span>
-          <input 
-            type="range" 
-            min="1" 
-            max="20" 
-            value={brushSize} 
-            onChange={(e) => setBrushSize(e.target.value)}
-            style={{ width: '80px' }}
-          />
-        </div>
 
       </div>
     </>
