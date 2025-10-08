@@ -66,35 +66,39 @@ function Colorfill() {
     <div className="colorfill-container">
       <div className="colorfill-header">
         <button className="back-button" onClick={goBack}>
-          ← 뒤로가기
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
         </button>
         <h1>색칠하기 갤러리</h1>
         <p>색칠하고 싶은 그림을 선택해주세요</p>
       </div>
 
-      <div className="gallery-grid">
-        {colorImages.map((image) => (
-          <div 
-            key={image.id} 
-            className="gallery-item"
-            onClick={() => selectImage(image)}
-          >
-            <div className="image-container">
-              <img 
-                src={`/src/imgdata/colorimg/${image.filename}`}
-                alt={image.name}
-                className="gallery-image"
-              />
-              <div className="image-overlay">
-                <div className="image-info">
-                  <h3>{image.name}</h3>
-                  <p>{image.description}</p>
-                  <button className="select-button">선택하기</button>
+      <div className="gallery-wrapper">
+        <div className="scrollable-content">
+          <div className="gallery-grid">
+            {colorImages.map((image) => (
+              <div 
+                key={image.id} 
+                className="gallery-item"
+                onClick={() => selectImage(image)}
+              >
+                <div className="image-container">
+                  <img 
+                    src={`/src/imgdata/colorimg/${image.filename}`}
+                    alt={image.name}
+                    className="gallery-image"
+                  />
+                  <div className="image-overlay">
+                    <div className="image-info">
+                      <h3>{image.name}</h3>
+                      <p>{image.description}</p>
+                      <button className="select-button">선택하기</button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
 
       {selectedImage && (
@@ -127,21 +131,108 @@ function Colorfill() {
 
       <style>{`
         .colorfill-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
+          height: 880px;
+          background: linear-gradient(135deg, rgb(39, 192, 141) 0%, #30E8AB 100%);
+          padding: 15px;
+          border-radius: 25px;
+          margin: 20px;
+          overflow: hidden;
+          box-sizing: border-box;
+          max-width: calc(100vw - 60px);
+          position: relative;
+          clip-path: inset(0);
+        }
+
+        .colorfill-container::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .colorfill-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+
+        .colorfill-container::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 10px;
+        }
+
+        .colorfill-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
+        .gallery-wrapper {
+          width: 100%;
+          height: 720px;
+          overflow-y: auto;
+          position: relative;
+          border-radius: 15px;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 10px;
+          box-sizing: border-box;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+        }
+
+        .gallery-wrapper::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+
+        .scrollable-content {
+          height: auto;
+          overflow: visible;
+          padding: 0;
+          margin: 0;
+          width: 100%;
+        }
+
+        .scrollable-content::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 10px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
         }
 
         .colorfill-header {
           text-align: center;
-          margin-bottom: 30px;
+          margin-bottom: 10px;
           color: white;
+          position: sticky;
+          top: 0;
+          background: linear-gradient(135deg, rgb(39, 192, 141) 0%, #30E8AB 100%);
+          padding: 10px 0;
+          z-index: 10;
+          border-radius: 20px;
+          margin: 0 0 10px 0;
         }
 
         .back-button {
           position: absolute;
-          left: 20px;
-          top: 20px;
+          left: 0px;
+          top: 0px;
           background: rgba(255, 255, 255, 0.2);
           border: none;
           color: white;
@@ -158,7 +249,7 @@ function Colorfill() {
         }
 
         .colorfill-header h1 {
-          font-size: 2.5rem;
+          font-size: 2.2rem;
           margin: 20px 0 10px 0;
           text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
@@ -170,16 +261,22 @@ function Colorfill() {
 
         .gallery-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 30px;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 20px;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 8px;
+          max-width: 100%;
+          margin: 0;
+          padding: 0;
+          padding-bottom: 15px;
+          height: fit-content;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .gallery-item {
           cursor: pointer;
           transition: transform 0.3s ease;
+          overflow: hidden;
+          border-radius: 10px;
         }
 
         .gallery-item:hover {
@@ -188,7 +285,7 @@ function Colorfill() {
 
         .image-container {
           position: relative;
-          border-radius: 15px;
+          border-radius: 25px;
           overflow: hidden;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
           background: white;
@@ -196,7 +293,7 @@ function Colorfill() {
 
         .gallery-image {
           width: 100%;
-          height: 250px;
+          height: 200px;
           object-fit: cover;
           transition: transform 0.3s ease;
         }
@@ -241,7 +338,7 @@ function Colorfill() {
         }
 
         .select-button {
-          background: #ff6b6b;
+          background: rgb(39, 192, 141);
           border: none;
           color: white;
           padding: 10px 20px;
@@ -252,7 +349,7 @@ function Colorfill() {
         }
 
         .select-button:hover {
-          background: #ff5252;
+          background: #30E8AB;
           transform: scale(1.05);
         }
 
@@ -271,7 +368,7 @@ function Colorfill() {
 
         .modal-content {
           background: white;
-          border-radius: 20px;
+          border-radius: 30px;
           padding: 30px;
           max-width: 500px;
           width: 90%;
@@ -291,7 +388,7 @@ function Colorfill() {
         }
 
         .modal-content h2 {
-          color: #333;
+          color: #111827;
           margin-bottom: 20px;
         }
 
@@ -299,12 +396,12 @@ function Colorfill() {
           width: 100%;
           max-height: 300px;
           object-fit: cover;
-          border-radius: 10px;
+          border-radius: 20px;
           margin-bottom: 15px;
         }
 
         .modal-content p {
-          color: #666;
+          color: #111827;
           margin-bottom: 25px;
           line-height: 1.6;
         }
@@ -316,7 +413,7 @@ function Colorfill() {
         }
 
         .start-coloring {
-          background: #4CAF50;
+          background: rgb(39, 192, 141);
           border: none;
           color: white;
           padding: 12px 25px;
@@ -327,7 +424,7 @@ function Colorfill() {
         }
 
         .start-coloring:hover {
-          background: #45a049;
+          background: #30E8AB;
           transform: scale(1.05);
         }
 

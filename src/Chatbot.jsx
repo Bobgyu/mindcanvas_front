@@ -135,7 +135,7 @@ function Chatbot({ isOpen, onClose }) {
     maxWidth: '800px',
     height: '80vh',
     maxHeight: '600px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, rgb(39, 192, 141) 0%, #30E8AB 100%)',
     borderRadius: '20px',
     boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
     overflow: 'hidden'
@@ -215,15 +215,15 @@ function Chatbot({ isOpen, onClose }) {
 
   const userMessageContentStyle = {
     ...messageContentStyle,
-    background: '#4CAF50',
+    background: 'rgb(39, 192, 141)',
     color: 'white',
     borderBottomRightRadius: '4px'
   }
 
   const botMessageContentStyle = {
     ...messageContentStyle,
-    background: 'white',
-    color: '#333',
+    background: '#CEF4E7',
+    color: '#111827',
     borderBottomLeftRadius: '4px',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
   }
@@ -283,7 +283,7 @@ function Chatbot({ isOpen, onClose }) {
 
   const sendButtonStyle = {
     padding: '12px 24px',
-    background: '#4CAF50',
+    background: 'rgb(39, 192, 141)',
     color: 'white',
     border: 'none',
     borderRadius: '25px',

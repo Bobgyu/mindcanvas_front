@@ -10,6 +10,7 @@ function Fillcanvas() {
   const [brushSize, setBrushSize] = useState(10)
   const [selectedColor, setSelectedColor] = useState('#ff6b6b')
   const [showColorPicker, setShowColorPicker] = useState(false)
+  const [showBrushSize, setShowBrushSize] = useState(false)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 })
   const [zoom, setZoom] = useState(1)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
@@ -389,9 +390,8 @@ function Fillcanvas() {
       <div className="canvas-header">
         <div className="header-left">
           <button className="back-button" onClick={goBack}>
-            ← 뒤로가기
+            <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '20px', height: '20px' }} />
           </button>
-          <h1>{selectedImage.name}</h1>
         </div>
         
         <div className="header-center">
@@ -408,24 +408,6 @@ function Fillcanvas() {
             </button>
           </div>
           
-          {zoom > 1 && (
-            <div className="navigation-controls">
-              <button className="nav-button" onClick={() => moveCanvas('up')} title="위로 이동">
-                ↑
-              </button>
-              <div className="nav-row">
-                <button className="nav-button" onClick={() => moveCanvas('left')} title="왼쪽으로 이동">
-                  ←
-                </button>
-                <button className="nav-button" onClick={() => moveCanvas('right')} title="오른쪽으로 이동">
-                  →
-                </button>
-              </div>
-              <button className="nav-button" onClick={() => moveCanvas('down')} title="아래로 이동">
-                ↓
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="header-right">
@@ -440,6 +422,24 @@ function Fillcanvas() {
 
       <div className="canvas-workspace">
         <div className="canvas-container">
+          {/* 네비게이션 컨트롤 (캔버스 우측 상단에 겹쳐서 배치) */}
+          <div className="navigation-controls">
+            <button className="nav-button" onClick={() => moveCanvas('up')} title="위로 이동">
+              ↑
+            </button>
+            <div className="nav-row">
+              <button className="nav-button" onClick={() => moveCanvas('left')} title="왼쪽으로 이동">
+                ←
+              </button>
+              <button className="nav-button" onClick={() => moveCanvas('right')} title="오른쪽으로 이동">
+                →
+              </button>
+            </div>
+            <button className="nav-button" onClick={() => moveCanvas('down')} title="아래로 이동">
+              ↓
+            </button>
+          </div>
+          
           <div 
             className="canvas-wrapper"
             style={{
@@ -486,72 +486,295 @@ function Fillcanvas() {
         </div>
       </div>
 
-      <div className="toolbar">
-        <div className="tool-section">
-          <h3>도구 선택</h3>
-          <div className="tool-buttons">
-            <button
-              className={`tool-button ${currentTool === 'brush' ? 'active' : ''}`}
-              onClick={() => setCurrentTool('brush')}
-            >
-              🖌️ 브러시
-            </button>
-            <button
-              className={`tool-button ${currentTool === 'eraser' ? 'active' : ''}`}
-              onClick={() => setCurrentTool('eraser')}
-            >
-              🧽 지우개
-            </button>
-          </div>
-        </div>
-
-        <div className="tool-section">
-          <h3>브러시 크기</h3>
-          <input
-            type="range"
-            min="1"
-            max="50"
-            value={brushSize}
-            onChange={(e) => setBrushSize(parseInt(e.target.value))}
-            className="brush-slider"
-          />
-          <span className="brush-size-display">{brushSize}px</span>
-        </div>
-
-        <div className="tool-section">
-          <h3>색상 선택</h3>
-          <div className="color-palette">
-            {colorPalette.map((color, index) => (
-              <button
-                key={index}
-                className={`color-button ${selectedColor === color ? 'active' : ''}`}
-                style={{ backgroundColor: color }}
-                onClick={() => setSelectedColor(color)}
-              />
-            ))}
-          </div>
-          <button
-            className="custom-color-button"
-            onClick={() => setShowColorPicker(!showColorPicker)}
+      {/* 하단 도구 바 - 고정 위치 */}
+      <div style={{ 
+        position: 'fixed',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex', 
+        justifyContent: 'center', 
+        gap: '15px', 
+        alignItems: 'center',
+        backgroundColor: 'rgb(39, 192, 141)',
+        padding: '15px 40px',
+        borderRadius: '50px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+        zIndex: 100
+      }}>
+        {/* 붓 버튼 */}
+        <div style={{ position: 'relative' }}>
+          <button 
+            onClick={() => {
+              setCurrentTool('brush')
+              setShowBrushSize(!showBrushSize)
+              setShowColorPicker(false)
+            }}
+            style={{ 
+              width: '50px', 
+              height: '50px', 
+              borderRadius: '50%', 
+              border: currentTool === 'brush' ? '3px solid #3a9d1f' : '1px solid #ccc',
+              backgroundColor: currentTool === 'brush' ? '#e8f5e8' : '#F9FAF9',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}
           >
-            사용자 정의 색상
+            <img src="/src/imgdata/icon/PAINTBRUSH.png" alt="붓" style={{ width: '32px', height: '32px' }} />
           </button>
+          
+          {/* 브러시 크기 드롭다운 */}
+          {showBrushSize && (
+            <div style={{
+              position: 'absolute',
+              bottom: '70px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#F9FAF9',
+              border: '1px solid #ccc',
+              borderRadius: '10px',
+              padding: '15px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              zIndex: 200,
+              minWidth: '200px'
+            }}>
+              <div style={{ 
+                fontSize: '14px', 
+                fontWeight: 'bold', 
+                textAlign: 'center',
+                color: '#333'
+              }}>
+                브러시 크기: {brushSize}px
+              </div>
+              <input 
+                type="range" 
+                min="1" 
+                max="50" 
+                value={brushSize} 
+                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                style={{ 
+                  width: '100%',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: '#ddd',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                gap: '8px',
+                justifyItems: 'center'
+              }}>
+                {[1, 3, 5, 8, 10, 12, 15, 20].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => {
+                      setBrushSize(size)
+                      setShowBrushSize(false)
+                    }}
+                    style={{
+                      width: '35px',
+                      height: '35px',
+                      borderRadius: '50%',
+                      border: brushSize === size ? '3px solid #3a9d1f' : '2px solid #ddd',
+                      backgroundColor: brushSize === size ? '#e8f5e8' : '#fff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'scale(1.1)'
+                      e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'scale(1)'
+                      e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* 지우개 버튼 */}
+        <button 
+          onClick={() => setCurrentTool('eraser')}
+          style={{ 
+            width: '50px', 
+            height: '50px', 
+            borderRadius: '50%', 
+            border: currentTool === 'eraser' ? '3px solid #3a9d1f' : '1px solid #ccc',
+            backgroundColor: currentTool === 'eraser' ? '#e8f5e8' : '#F9FAF9',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+          }}
+        >
+          <img src="/src/imgdata/icon/eraser.png" alt="지우개" style={{ width: '32px', height: '32px' }} />
+        </button>
+        
+        {/* 팔레트 버튼 */}
+        <div style={{ position: 'relative' }}>
+          <button 
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            style={{ 
+              width: '50px', 
+              height: '50px', 
+              borderRadius: '50%', 
+              border: '1px solid #ccc',
+              backgroundColor: '#F9FAF9',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}
+          >
+            <img src="/src/imgdata/icon/PALLETE.png" alt="팔레트" style={{ width: '32px', height: '32px' }} />
+          </button>
+          
+          {/* 팔레트 드롭다운 */}
           {showColorPicker && (
-            <input
-              type="color"
-              value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
-              className="color-picker"
-            />
+            <div style={{
+              position: 'absolute',
+              bottom: '70px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#F9FAF9',
+              border: '1px solid #ccc',
+              borderRadius: '10px',
+              padding: '15px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              zIndex: 200,
+              minWidth: '240px',
+              maxWidth: '280px'
+            }}>
+              {/* 기본 색상들 */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(5, 1fr)', 
+                gap: '8px',
+                justifyItems: 'center'
+              }}>
+                {colorPalette.map((color, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedColor(color)}
+                    style={{
+                      width: '35px',
+                      height: '35px',
+                      backgroundColor: color,
+                      border: selectedColor === color ? '3px solid #3a9d1f' : '2px solid #ddd',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'scale(1.1)'
+                      e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'scale(1)'
+                      e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* 구분선 */}
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: '#eee', 
+                margin: '5px 0' 
+              }} />
+              
+              {/* 사용자 지정 색상 */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  style={{
+                    width: '45px',
+                    height: '35px',
+                    border: '2px solid #ddd',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <button
+                  onClick={() => setShowColorPicker(false)}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'rgb(39, 192, 141)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'rgb(35, 173, 127)'
+                    e.target.style.transform = 'translateY(-1px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'rgb(39, 192, 141)'
+                    e.target.style.transform = 'translateY(0)'
+                  }}
+                >
+                  선택
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
       <style jsx>{`
         .fillcanvas-container {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
+          height: 910px;
+          background: linear-gradient(135deg, rgb(39, 192, 141) 0%, #30E8AB 100%);
+          padding: 15px;
+          overflow: hidden;
+          border-radius: 25px;
+          margin: 10px;
         }
 
         .loading-container {
@@ -591,6 +814,7 @@ function Fillcanvas() {
           display: flex;
           align-items: center;
           gap: 20px;
+          position: relative;
         }
 
         .header-center {
@@ -602,18 +826,27 @@ function Fillcanvas() {
           display: flex;
           align-items: center;
           gap: 10px;
+          position: relative;
         }
 
         .back-button {
+          position: absolute;
+          left: -30px;
+          top: -30px;
           background: rgba(255, 255, 255, 0.2);
           border: none;
           color: white;
-          padding: 10px 20px;
-          border-radius: 25px;
+          padding: 8px;
+          border-radius: 50%;
           cursor: pointer;
           font-size: 16px;
           transition: all 0.3s ease;
           white-space: nowrap;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .back-button:hover {
@@ -621,12 +854,6 @@ function Fillcanvas() {
           transform: translateX(-5px);
         }
 
-        .canvas-header h1 {
-          font-size: 1.8rem;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-          margin: 0;
-          white-space: nowrap;
-        }
 
         .zoom-controls {
           display: flex;
@@ -670,11 +897,18 @@ function Fillcanvas() {
         }
 
         .navigation-controls {
+          position: absolute;
+          top: 10px;
+          right: 10px;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 5px;
-          margin-left: 20px;
+          backgroundColor: 'rgba(255, 255, 255, 0.3)';
+          padding: 8px;
+          border-radius: 15px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          z-index: 20;
         }
 
         .nav-row {
@@ -683,9 +917,9 @@ function Fillcanvas() {
         }
 
         .nav-button {
-          background: rgba(255, 255, 255, 0.3);
-          border: none;
-          color: white;
+          background: rgba(240, 240, 240, 0.5);
+          border: 1px solid rgba(204, 204, 204, 0.5);
+          color: #333;
           width: 35px;
           height: 35px;
           border-radius: 8px;
@@ -699,20 +933,29 @@ function Fillcanvas() {
         }
 
         .nav-button:hover {
-          background: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.8);
           transform: scale(1.1);
         }
 
         .action-button {
-          padding: 10px 20px;
+          position: absolute;
+          top: -30px;
+          padding: 8px;
           border: none;
-          border-radius: 25px;
+          border-radius: 50%;
           cursor: pointer;
-          font-size: 16px;
+          font-size: 12px;
           transition: all 0.3s ease;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          white-space: nowrap;
         }
 
         .action-button.clear {
+          right: 40px;
           background: #ff6b6b;
           color: white;
         }
@@ -723,12 +966,13 @@ function Fillcanvas() {
         }
 
         .action-button.save {
-          background: rgb(39, 192, 141);
-          color: white;
+          right: -10px;
+          background: #CEF4E7;
+          color: #111827;
         }
 
         .action-button.save:hover {
-          background: rgb(35, 173, 127);
+          background: #B8E8D1;
           transform: scale(1.05);
         }
 
@@ -737,144 +981,24 @@ function Fillcanvas() {
           display: flex;
           justify-content: center;
           align-items: center;
-          max-width: 1200px;
+          max-width: 1000px;
           margin: 0 auto 20px auto;
-          min-height: 400px;
+          height: 720px;
         }
 
-        .toolbar {
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 15px;
-          padding: 20px;
-          max-width: 1200px;
-          margin: 0 auto;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .tool-section {
-          margin-bottom: 25px;
-        }
-
-        .toolbar .tool-section:last-child {
-          margin-bottom: 0;
-        }
-
-        .tool-section h3 {
-          margin: 0 0 15px 0;
-          color: #333;
-          font-size: 1.1rem;
-        }
-
-        .tool-buttons {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-
-        .tool-button {
-          flex: 1;
-          padding: 12px 16px;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          background: white;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-        }
-
-        .tool-button:hover {
-          border-color: #4CAF50;
-          background: #f0f8f0;
-        }
-
-        .tool-button.active {
-          border-color: #4CAF50;
-          background: #4CAF50;
-          color: white;
-        }
-
-        .tool-button.active:hover {
-          background: #45a049;
-        }
-
-        .brush-slider {
-          width: 100%;
-          margin-bottom: 10px;
-        }
-
-        .brush-size-display {
-          display: block;
-          text-align: center;
-          color: #666;
-          font-weight: bold;
-        }
-
-        .color-palette {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 8px;
-          margin-bottom: 15px;
-        }
-
-        .color-button {
-          width: 35px;
-          height: 35px;
-          border: 3px solid transparent;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .color-button:hover {
-          transform: scale(1.1);
-        }
-
-        .color-button.active {
-          border-color: #333;
-          transform: scale(1.2);
-        }
-
-        .custom-color-button {
-          width: 100%;
-          padding: 10px;
-          background: #f0f0f0;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.3s ease;
-        }
-
-        .custom-color-button:hover {
-          background: #e0e0e0;
-        }
-
-        .color-picker {
-          width: 100%;
-          height: 40px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          margin-top: 10px;
-        }
 
         .canvas-container {
           display: flex;
           justify-content: center;
           align-items: center;
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 15px;
-          padding: 20px;
+          background: #F9FAF9;
+          border-radius: 25px;
+          padding: 15px;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
           overflow: hidden;
           position: relative;
           width: 100%;
-          height: 500px;
+          height: 720px;
         }
 
         .canvas-wrapper {
@@ -883,7 +1007,7 @@ function Fillcanvas() {
 
         .drawing-canvas {
           border: 2px solid #ddd;
-          border-radius: 10px;
+          border-radius: 20px;
           cursor: crosshair;
           background: white;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
