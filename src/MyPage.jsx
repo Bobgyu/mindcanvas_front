@@ -1,11 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 function MyPage() {
   const [count, setCount] = useState(0)
+  const [userInfo, setUserInfo] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const navigate = useNavigate()
+
+  // 사용자 정보 조회
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          const response = await axios.get('http://localhost:5000/api/user-info', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.data.success) {
+            setUserInfo(response.data.user);
+          }
+        }
+      } catch (err) {
+        console.log('사용자 정보 조회 실패:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   const handleCoordinator = () => {
     navigate('coordinator')   // 상대경로 → /mypage/coordinator 로 이동
@@ -37,9 +66,35 @@ function MyPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>로딩 중...</div>
+      </div>
+    );
+  }
+
   return (
     <>
     <div className='upper-options'>
+      {/* 관리자 배지 - 작게 */}
+      {userInfo && userInfo.is_admin && (
+        <div style={{
+          backgroundColor: '#ff6b6b',
+          color: 'white',
+          padding: '4px 8px',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          borderRadius: '10px',
+          margin: '0 auto 10px auto',
+          width: 'fit-content',
+          display: 'inline-block'
+        }}>
+          관리자
+        </div>
+      )}
+      
       <input type="button" className='upper-option' value="내 그림(작품) 보기 (+분석결과)" onClick={() => navigate('/mypage/gallery')} />
       <input type="button" className='upper-option' value="마음일기 보기" onClick={() => navigate('/diary/list')} />
       <input type="button" className='upper-option' value="마음코디네이터" onClick={handleCoordinator}/>

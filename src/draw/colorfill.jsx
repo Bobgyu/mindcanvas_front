@@ -102,24 +102,24 @@ function Colorfill() {
       </div>
 
       {selectedImage && (
-        <div className="selected-image-modal">
-          <div className="modal-content">
-            <h2>{selectedImage.name}</h2>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[1000]">
+          <div className="bg-white rounded-[20px] p-5 max-w-[400px] w-[90%] text-center animate-[modalSlideIn_0.3s_ease]">
+            <h2 className="text-[#333] mb-4 text-xl">{selectedImage.name}</h2>
             <img 
               src={`/src/imgdata/colorimg/${selectedImage.filename}`}
               alt={selectedImage.name}
-              className="modal-image"
+              className="w-full max-h-[200px] object-cover rounded-[10px] mb-2.5"
             />
-            <p>{selectedImage.description}</p>
-            <div className="modal-buttons">
+            <p className="text-[#666] mb-5 leading-[1.4] text-sm">{selectedImage.description}</p>
+            <div className="flex gap-2.5 justify-center">
               <button 
-                className="start-coloring"
+                className="bg-[#4CAF50] border-none text-white px-4 py-2 rounded-[20px] cursor-pointer text-sm transition-all duration-300 hover:bg-[#45a049] hover:scale-105"
                 onClick={() => startColoring(selectedImage)}
               >
                 색칠하기 시작
               </button>
               <button 
-                className="close-modal"
+                className="bg-[#f44336] border-none text-white px-4 py-2 rounded-[20px] cursor-pointer text-sm transition-all duration-300 hover:bg-[#da190b] hover:scale-105"
                 onClick={() => setSelectedImage(null)}
               >
                 닫기
@@ -243,11 +243,6 @@ function Colorfill() {
           transition: all 0.3s ease;
         }
 
-        .back-button:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateX(-5px);
-        }
-
         .colorfill-header h1 {
           font-size: 2.2rem;
           margin: 20px 0 10px 0;
@@ -353,29 +348,6 @@ function Colorfill() {
           transform: scale(1.05);
         }
 
-        .selected-image-modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal-content {
-          background: white;
-          border-radius: 30px;
-          padding: 30px;
-          max-width: 500px;
-          width: 90%;
-          text-align: center;
-          animation: modalSlideIn 0.3s ease;
-        }
-
         @keyframes modalSlideIn {
           from {
             opacity: 0;
@@ -385,63 +357,6 @@ function Colorfill() {
             opacity: 1;
             transform: translateY(0);
           }
-        }
-
-        .modal-content h2 {
-          color: #111827;
-          margin-bottom: 20px;
-        }
-
-        .modal-image {
-          width: 100%;
-          max-height: 300px;
-          object-fit: cover;
-          border-radius: 20px;
-          margin-bottom: 15px;
-        }
-
-        .modal-content p {
-          color: #111827;
-          margin-bottom: 25px;
-          line-height: 1.6;
-        }
-
-        .modal-buttons {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-        }
-
-        .start-coloring {
-          background: rgb(39, 192, 141);
-          border: none;
-          color: white;
-          padding: 12px 25px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .start-coloring:hover {
-          background: #30E8AB;
-          transform: scale(1.05);
-        }
-
-        .close-modal {
-          background: #f44336;
-          border: none;
-          color: white;
-          padding: 12px 25px;
-          border-radius: 25px;
-          cursor: pointer;
-          font-size: 16px;
-          transition: all 0.3s ease;
-        }
-
-        .close-modal:hover {
-          background: #da190b;
-          transform: scale(1.05);
         }
 
         @media (max-width: 768px) {

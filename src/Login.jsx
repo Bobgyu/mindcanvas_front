@@ -134,6 +134,7 @@ function Login() {
                 placeholder="이메일 아이디"
                 value={emailLocalPart}
                 onChange={(e) => setEmailLocalPart(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 style={{ marginRight: '8px' }}
               />
               <span>@</span>
@@ -156,6 +157,7 @@ function Login() {
                   placeholder="도메인 직접 입력"
                   value={selectedDomain === '직접입력' ? '' : selectedDomain}
                   onChange={(e) => setSelectedDomain(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               )}
             </div>
@@ -173,6 +175,7 @@ function Login() {
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
             />
           </div>
 
