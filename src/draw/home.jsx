@@ -108,6 +108,7 @@ function Home() {
 
       if (response.data.success) {
         alert("그림이 성공적으로 저장되었습니다!");
+        navigate('/mypage/gallery');
         return true;
       } else {
         alert("그림 저장에 실패했습니다: " + response.data.error);
@@ -210,9 +211,29 @@ function Home() {
     canvas.width = 400
     canvas.height = 680
     
-    // 배경색 설정
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    // 이어서 그리기 데이터 확인
+    const continueDrawingData = localStorage.getItem('continueDrawing')
+    if (continueDrawingData) {
+      try {
+        const data = JSON.parse(continueDrawingData)
+        if (data.image) {
+          // 저장된 그림을 캔버스에 로드
+          const img = new Image()
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          }
+          img.src = data.image
+          // 로컬 스토리지에서 데이터 제거
+          localStorage.removeItem('continueDrawing')
+        }
+      } catch (error) {
+        console.error('이어서 그리기 데이터 로드 실패:', error)
+      }
+    } else {
+      // 배경색 설정 (새로 그리기인 경우)
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
     
     // 기본 설정
     ctx.lineCap = 'round'

@@ -388,15 +388,16 @@ function Fillcanvas() {
         });
 
         if (response.data.success) {
-          alert("그림이 성공적으로 업데이트되었습니다!");
+          alert("그림이 성공적으로 저장되었습니다!");
           navigate('/mypage/gallery');
         } else {
-          alert("그림 업데이트에 실패했습니다: " + response.data.error);
+          alert("그림 저장에 실패했습니다: " + response.data.error);
         }
       } else {
         // 새로운 색칠하기인 경우 새로 저장
         const response = await axios.post('http://localhost:5000/api/colored-drawings', {
-          image: imageData
+          image: imageData,
+          drawing_type: 'colored'
         }, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -495,7 +496,7 @@ function Fillcanvas() {
             초기화
           </button>
           <button className="action-button save" onClick={saveCanvas}>
-            {selectedImage && selectedImage.isContinue ? '업데이트' : '저장'}
+            저장
           </button>
         </div>
       </div>

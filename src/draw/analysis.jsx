@@ -8,9 +8,21 @@ function Analysis() {
   const [drawnImage, setDrawnImage] = useState(null)
   const [analyzedImage, setAnalyzedImage] = useState(null)
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
+  const [isFromGallery, setIsFromGallery] = useState(false)
+  const [galleryDrawingId, setGalleryDrawingId] = useState(null)
 
   const handleBack = () => {
-    navigate('/draw/home')
+    if (isFromGallery) {
+      // 갤러리에서 온 경우 갤러리로 돌아가기 (새로고침하여 분석 결과 반영)
+      navigate('/mypage/gallery')
+      // 페이지 새로고침으로 분석 결과 반영
+      setTimeout(() => {
+        window.location.reload()
+      }, 100)
+    } else {
+      // 일반 그리기에서 온 경우
+      navigate('/draw/home')
+    }
   }
 
   const findMindCoordinator = () => {
@@ -19,6 +31,38 @@ function Analysis() {
 
   const findCounselingCenter = () => {
     navigate('/counseling-center')
+  }
+
+  // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
+  const updateGalleryDrawing = async (analysisResult) => {
+    if (!isFromGallery || !galleryDrawingId) return
+
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`http://localhost:5000/api/drawings/${galleryDrawingId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          image: drawnImage,
+          analysis_result: analysisResult
+        })
+      })
+
+      if (response.ok) {
+        console.log('갤러리 그림 분석 결과 업데이트 완료')
+        // 성공 알림
+        alert('분석 결과가 저장되었습니다!')
+      } else {
+        console.error('갤러리 그림 업데이트 실패')
+        alert('분석 결과 저장에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('갤러리 그림 업데이트 오류:', error)
+      alert('분석 결과 저장 중 오류가 발생했습니다.')
+    }
   }
 
   const getChatbotAnalysis = async (analysisData) => {
@@ -55,6 +99,21 @@ function Analysis() {
   }
 
   useEffect(() => {
+    // 갤러리에서 온 경우인지 확인
+    const continueDrawingData = localStorage.getItem('continueDrawing')
+    if (continueDrawingData) {
+      try {
+        const data = JSON.parse(continueDrawingData)
+        setIsFromGallery(true)
+        setGalleryDrawingId(data.id)
+        setDrawnImage(data.image)
+        // 갤러리에서 온 경우 로컬 스토리지 정리
+        localStorage.removeItem('continueDrawing')
+      } catch (error) {
+        console.error('갤러리 데이터 로드 실패:', error)
+      }
+    }
+    
     // 로컬 스토리지에서 그린 그림과 분석 결과 가져오기
     const savedDrawnImage = localStorage.getItem('drawnImage')
     const savedAnalysis = localStorage.getItem('analysisResult')
@@ -108,6 +167,11 @@ function Analysis() {
           })
         }
         
+        
+        // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
+        if (isFromGallery) {
+          updateGalleryDrawing(parsedAnalysis)
+        }
         
         // 챗봇 분석 요청
         getChatbotAnalysis(parsedAnalysis)

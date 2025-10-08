@@ -113,6 +113,12 @@ function MyGallery() {
         });
         if (response.data.success) {
           setDrawings(response.data.drawings);
+          // 디버깅: 분석 결과가 있는 그림들 확인
+          console.log('갤러리 그림들:', response.data.drawings.map(d => ({
+            id: d.id,
+            hasAnalysis: !!d.analysis_result,
+            analysisResult: d.analysis_result
+          })));
         }
       } catch (err) {
         console.error("그림 가져오기 오류:", err);
@@ -156,6 +162,8 @@ function MyGallery() {
 
       if (response.data.success) {
         alert('그림이 삭제되었습니다.');
+        // 상세보기 모달 닫기
+        setSelectedDrawing(null);
         // 목록 새로고침
         const fetchDrawings = async () => {
           const token = localStorage.getItem('authToken');
@@ -229,7 +237,7 @@ function MyGallery() {
         <div className="w-6"></div>
       </header>
 
-      <main className="flex-grow p-6">
+      <main className="flex-grow p-6 overflow-y-auto scrollbar-hide">
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {drawings.length === 0 ? (
@@ -297,8 +305,8 @@ function MyGallery() {
                 <p className="text-sm text-gray-600">저장일: {new Date(selectedDrawing.created_at).toLocaleString()}</p>
               </div>
 
-              {/* 이어서 색칠하기 버튼 (분석되지 않은 그림에만) */}
-              {!selectedDrawing.analysis_result && (
+              {/* 이어서 색칠하기 버튼 (테마/색칠하기 그림에만) */}
+              {(selectedDrawing.drawing_type === 'theme' || selectedDrawing.drawing_type === 'colored') && (
                 <div className="mb-4">
                   <button
                     onClick={async () => {
@@ -324,6 +332,37 @@ function MyGallery() {
                     className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                   >
                     이어서 색칠하기
+                  </button>
+                </div>
+              )}
+
+              {/* 이어서 그리기 버튼 (분석 버튼을 누른 그림들용) */}
+              {!selectedDrawing.analysis_result && selectedDrawing.drawing_type !== 'theme' && selectedDrawing.drawing_type !== 'colored' && (
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      // 저장된 그림 데이터를 로컬 스토리지에 저장하고 해당 그리기 페이지로 이동
+                      localStorage.setItem('continueDrawing', JSON.stringify({
+                        id: selectedDrawing.id,
+                        image: selectedDrawing.image,
+                        drawingType: selectedDrawing.drawing_type || 'normal'
+                      }));
+                      
+                      // drawing_type에 따라 적절한 페이지로 이동
+                      if (selectedDrawing.drawing_type === 'house' || !selectedDrawing.drawing_type) {
+                        navigate('/draw/home');
+                      } else if (selectedDrawing.drawing_type === 'tree') {
+                        navigate('/draw/tree');
+                      } else if (selectedDrawing.drawing_type === 'person') {
+                        navigate('/draw/person');
+                      } else {
+                        // 기본값으로 집 그리기 페이지로 이동
+                        navigate('/draw/home');
+                      }
+                    }}
+                    className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    이어서 그리기
                   </button>
                 </div>
               )}
@@ -389,23 +428,66 @@ function MyGallery() {
                   ))}
                 </div>
               ) : (
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-center">
-                      <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                      <p className="text-gray-500 text-lg font-medium">아직 분석되지 않은 그림입니다</p>
-                      <p className="text-gray-400 text-sm mt-1">분석을 원하시면 해당 그림을 분석해주세요</p>
+                // 분석되지 않은 일반 그림에만 분석 메시지 표시 (테마/색칠하기 그림 제외)
+                !selectedDrawing.analysis_result && selectedDrawing.drawing_type !== 'theme' && selectedDrawing.drawing_type !== 'colored' && (
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-center py-8">
+                      <div className="text-center">
+                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <p className="text-gray-500 text-lg font-medium">아직 분석되지 않은 그림입니다</p>
+                        <p className="text-gray-400 text-sm mt-1">분석을 원하시면 아래 버튼을 눌러주세요</p>
+                        <button
+                          onClick={() => {
+                            // 갤러리에서 온 경우임을 표시하고 분석 페이지로 이동
+                            localStorage.setItem('drawnImage', selectedDrawing.image);
+                            localStorage.setItem('continueDrawing', JSON.stringify({
+                              id: selectedDrawing.id,
+                              image: selectedDrawing.image,
+                              drawingType: selectedDrawing.drawing_type || 'normal',
+                              fromGallery: true
+                            }));
+                            navigate('/draw/analysis');
+                          }}
+                          className="mt-4 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          분석하기
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )
               )}
             </div>
           </div>
         )}
 
       </main>
+
+      <style>{`
+        .scrollbar-hide {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
     </div>
   );
 }

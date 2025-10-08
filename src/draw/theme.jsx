@@ -153,7 +153,8 @@ function Theme() {
 
     try {
       const response = await axios.post('http://localhost:5000/api/drawings', {
-        image: imageData
+        image: imageData,
+        drawing_type: 'theme'
       }, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -163,6 +164,8 @@ function Theme() {
 
       if (response.data.success) {
         alert("그림이 성공적으로 저장되었습니다!");
+        // 갤러리로 이동
+        navigate('/mypage/gallery');
         return true;
       } else {
         alert("그림 저장에 실패했습니다: " + response.data.error);
