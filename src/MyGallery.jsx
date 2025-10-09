@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 function MyGallery() {
@@ -7,6 +7,7 @@ function MyGallery() {
   const [error, setError] = useState('');
   const [selectedDrawing, setSelectedDrawing] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 색칠하기 원본 이미지 목록
   const colorImages = [
@@ -95,50 +96,91 @@ function MyGallery() {
     });
   };
 
-  useEffect(() => {
-    const fetchDrawings = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setError('로그인이 필요합니다.');
+  const fetchDrawings = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setError('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await axios.get('http://localhost:5000/api/drawings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.data.success) {
+        setDrawings(response.data.drawings);
+        // 디버깅: 분석 결과가 있는 그림들 확인
+        console.log('갤러리 그림들:', response.data.drawings.map(d => ({
+          id: d.id,
+          hasAnalysis: !!d.analysis_result,
+          analysisResult: d.analysis_result,
+          drawingType: d.drawing_type
+        })));
+      }
+    } catch (err) {
+      console.error("그림 가져오기 오류:", err);
+      if (err.response?.status === 401) {
+        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
         navigate('/login');
-        return;
+      } else {
+        setError('그림을 가져오는 중 오류가 발생했습니다.');
       }
+    }
+  };
 
-      try {
-        const response = await axios.get('http://localhost:5000/api/drawings', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (response.data.success) {
-          setDrawings(response.data.drawings);
-          // 디버깅: 분석 결과가 있는 그림들 확인
-          console.log('갤러리 그림들:', response.data.drawings.map(d => ({
-            id: d.id,
-            hasAnalysis: !!d.analysis_result,
-            analysisResult: d.analysis_result
-          })));
-        }
-      } catch (err) {
-        console.error("그림 가져오기 오류:", err);
-        if (err.response?.status === 401) {
-          alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userId');
-          localStorage.removeItem('username');
-          navigate('/login');
-        } else {
-          setError('그림을 가져오는 중 오류가 발생했습니다.');
-        }
-      }
-    };
-
+  useEffect(() => {
     fetchDrawings();
   }, [navigate]);
 
+  // location.state에서 selectedDrawingId가 있으면 해당 그림을 선택
+  useEffect(() => {
+    if (location.state && location.state.selectedDrawingId && drawings.length > 0) {
+      const targetDrawing = drawings.find(drawing => drawing.id === location.state.selectedDrawingId);
+      if (targetDrawing) {
+        setSelectedDrawing(targetDrawing);
+        console.log('선택된 그림:', targetDrawing);
+        console.log('분석 결과:', targetDrawing.analysis_result);
+        if (targetDrawing.analysis_result) {
+          console.log('분석 결과 필드들:', Object.keys(targetDrawing.analysis_result));
+          console.log('AI 분석 내용:', targetDrawing.analysis_result.ai_analysis);
+          console.log('Speech 분석 내용:', targetDrawing.analysis_result.speech_analysis);
+        }
+      }
+      // state를 클리어해서 다음 방문 시에는 선택되지 않도록
+      navigate(location.pathname, { replace: true });
+    }
+  }, [drawings, location.state, navigate, location.pathname]);
+
+  // 페이지 포커스 시 데이터 새로고침 (분석 완료 후 갤러리로 돌아올 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      // 분석 완료 플래그가 있으면 데이터 새로고침
+      if (localStorage.getItem('analysisCompleted')) {
+        fetchDrawings();
+        localStorage.removeItem('analysisCompleted');
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const handleThumbnailClick = (drawing) => {
     // 모든 그림을 상세보기로 처리 (삭제 기능을 위해)
+    console.log('선택된 그림:', drawing);
+    console.log('분석 결과:', drawing.analysis_result);
+    if (drawing.analysis_result) {
+      console.log('분석 결과 필드들:', Object.keys(drawing.analysis_result));
+      console.log('AI 분석 내용:', drawing.analysis_result.ai_analysis);
+      console.log('Speech 분석 내용:', drawing.analysis_result.speech_analysis);
+    }
     setSelectedDrawing(drawing);
   };
 
@@ -165,37 +207,6 @@ function MyGallery() {
         // 상세보기 모달 닫기
         setSelectedDrawing(null);
         // 목록 새로고침
-        const fetchDrawings = async () => {
-          const token = localStorage.getItem('authToken');
-          if (!token) {
-            setError('로그인이 필요합니다.');
-            navigate('/login');
-            return;
-          }
-
-          try {
-            const response = await axios.get('http://localhost:5000/api/drawings', {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            if (response.data.success) {
-              setDrawings(response.data.drawings);
-            }
-          } catch (err) {
-            console.error("그림 가져오기 오류:", err);
-            if (err.response?.status === 401) {
-              alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('userId');
-              localStorage.removeItem('username');
-              navigate('/login');
-            } else {
-              setError('그림을 가져오는 중 오류가 발생했습니다.');
-            }
-          }
-        };
         fetchDrawings();
       } else {
         alert('그림 삭제에 실패했습니다.');
@@ -259,7 +270,7 @@ function MyGallery() {
                 />
                 {/* 분석된 그림에만 "분석" 표시 */}
                 {drawing.analysis_result && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
                     분석
                   </div>
                 )}
@@ -369,42 +380,57 @@ function MyGallery() {
 
               {selectedDrawing.analysis_result ? (
                 <div className="border-t pt-4">
-                  <div className="flex items-center mb-4">
-                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                    <h3 className="font-semibold text-lg">심리 분석 결과</h3>
-                  </div>
-                  
-                  {/* 전체 점수와 위험도 */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-                      <div className="flex items-center mb-2">
-                        <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                        </svg>
-                        <p className="text-sm font-medium text-blue-700">총 점수</p>
+                  {/* AI 심리 분석 영역 - analysis.jsx와 동일한 디자인 */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
+                      AI 심리 분석
+                    </h3>
+                    <div className="w-full min-h-[150px] border-2 border-gray-800 rounded-lg p-4 bg-gray-50 text-sm text-gray-700 whitespace-pre-wrap text-left overflow-auto leading-relaxed">
+                      {selectedDrawing.analysis_result.ai_analysis || 
+                       selectedDrawing.analysis_result.speech_analysis || 
+                       selectedDrawing.analysis_result.chatbot_analysis ||
+                       'AI가 따뜻한 심리 분석을 준비하고 있습니다...'}
+                      
+                      {/* 디버깅 정보 */}
+                      <div className="mt-4 p-2 bg-yellow-100 rounded text-xs">
+                        <p><strong>디버깅:</strong></p>
+                        <p>ai_analysis: {selectedDrawing.analysis_result.ai_analysis ? '있음' : '없음'}</p>
+                        <p>speech_analysis: {selectedDrawing.analysis_result.speech_analysis ? '있음' : '없음'}</p>
+                        <p>chatbot_analysis: {selectedDrawing.analysis_result.chatbot_analysis ? '있음' : '없음'}</p>
+                        <p>전체 필드: {Object.keys(selectedDrawing.analysis_result).join(', ')}</p>
                       </div>
-                      <p className="text-2xl font-bold text-blue-800">{selectedDrawing.analysis_result.total_score}</p>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
-                      <div className="flex items-center mb-2">
-                        <svg className="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
-                        </svg>
-                        <p className="text-sm font-medium text-red-700">위험도</p>
-                      </div>
-                      <p className="text-2xl font-bold text-red-800">{selectedDrawing.analysis_result.risk_level}</p>
                     </div>
                   </div>
+
+                  {/* 하단 버튼 영역 - analysis.jsx와 동일한 디자인 */}
+                  <div className="flex gap-4 justify-center mt-6 mb-4">
+                    {/* 마음코디네이터 찾기 버튼 */}
+                    <button
+                      onClick={() => navigate('/coordinator', { state: { from: 'gallery-detail', drawingId: selectedDrawing.id } })}
+                      className="px-6 py-3 bg-green-500 text-white border-none rounded-full text-sm font-bold cursor-pointer shadow-md transition-all duration-200 hover:bg-green-600 hover:transform hover:-translate-y-0.5"
+                    >
+                      마음코디네이터 찾기
+                    </button>
+
+                    {/* 근처 상담센터 찾기 버튼 */}
+                    <button
+                      onClick={() => navigate('/counseling-center')}
+                      className="px-6 py-3 bg-green-500 text-white border-none rounded-full text-sm font-bold cursor-pointer shadow-md transition-all duration-200 hover:bg-green-600 hover:transform hover:-translate-y-0.5"
+                    >
+                      근처 상담센터 찾기
+                    </button>
+                  </div>
                   
-                  {/* 상세 분석 결과 */}
+                  {/* 기존 구조 (objects, total_score, risk_level) 지원 */}
                   {selectedDrawing.analysis_result.objects && Object.entries(selectedDrawing.analysis_result.objects).map(([objType, objData]) => (
                     <div key={objType} className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-lg text-gray-800">{objData.label}</h4>
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                          점수: {objData.score}
-                        </span>
+                        <h4 className="font-semibold text-lg text-gray-800">{objData.label || objType}</h4>
+                        {objData.score && (
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                            점수: {objData.score}
+                          </span>
+                        )}
                       </div>
                       
                       <div className="space-y-3">
@@ -412,13 +438,15 @@ function MyGallery() {
                           <div key={index} className="p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
                             <div className="flex items-start justify-between mb-2">
                               <h5 className="font-medium text-gray-800">{interp.feature}</h5>
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                interp.severity === '높음' ? 'bg-red-100 text-red-800' :
-                                interp.severity === '보통' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-green-100 text-green-800'
-                              }`}>
-                                심각도: {interp.severity}
-                              </span>
+                              {interp.severity && (
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                  interp.severity === '높음' ? 'bg-red-100 text-red-800' :
+                                  interp.severity === '보통' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  심각도: {interp.severity}
+                                </span>
+                              )}
                             </div>
                             <p className="text-gray-700 text-sm leading-relaxed">{interp.interpretation}</p>
                           </div>
@@ -426,6 +454,34 @@ function MyGallery() {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* 전체 점수와 위험도 (기존 구조 지원) */}
+                  {selectedDrawing.analysis_result.total_score && (
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                        <div className="flex items-center mb-2">
+                          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                          </svg>
+                          <p className="text-sm font-medium text-blue-700">총 점수</p>
+                        </div>
+                        <p className="text-2xl font-bold text-blue-800">{selectedDrawing.analysis_result.total_score}</p>
+                      </div>
+                      
+                      {selectedDrawing.analysis_result.risk_level && (
+                        <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                          <div className="flex items-center mb-2">
+                            <svg className="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                            </svg>
+                            <p className="text-sm font-medium text-red-700">위험도</p>
+                          </div>
+                          <p className="text-2xl font-bold text-red-800">{selectedDrawing.analysis_result.risk_level}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                 </div>
               ) : (
                 // 분석되지 않은 일반 그림에만 분석 메시지 표시 (테마/색칠하기 그림 제외)

@@ -10,15 +10,17 @@ function Analysis() {
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
   const [isFromGallery, setIsFromGallery] = useState(false)
   const [galleryDrawingId, setGalleryDrawingId] = useState(null)
+  const [savedDrawingId, setSavedDrawingId] = useState(null) // 일반 그리기에서 저장된 그림 ID
 
   const handleBack = () => {
+    // 로컬 스토리지 정리
+    localStorage.removeItem('savedDrawingId')
+    localStorage.removeItem('drawnImage')
+    localStorage.removeItem('analysisResult')
+    
     if (isFromGallery) {
-      // 갤러리에서 온 경우 갤러리로 돌아가기 (새로고침하여 분석 결과 반영)
+      // 갤러리에서 온 경우 갤러리로 돌아가기
       navigate('/mypage/gallery')
-      // 페이지 새로고침으로 분석 결과 반영
-      setTimeout(() => {
-        window.location.reload()
-      }, 100)
     } else {
       // 일반 그리기에서 온 경우
       navigate('/draw/home')
@@ -26,7 +28,7 @@ function Analysis() {
   }
 
   const findMindCoordinator = () => {
-    alert('마음코디네이터 찾기 기능은 준비 중입니다!')
+    navigate('/coordinator', { state: { from: 'analysis' } })
   }
 
   const findCounselingCenter = () => {
@@ -55,6 +57,8 @@ function Analysis() {
         console.log('갤러리 그림 분석 결과 업데이트 완료')
         // 성공 알림
         alert('분석 결과가 저장되었습니다!')
+        // 로컬 스토리지에 분석 완료 플래그 저장
+        localStorage.setItem('analysisCompleted', 'true')
       } else {
         console.error('갤러리 그림 업데이트 실패')
         alert('분석 결과 저장에 실패했습니다.')
@@ -62,6 +66,33 @@ function Analysis() {
     } catch (error) {
       console.error('갤러리 그림 업데이트 오류:', error)
       alert('분석 결과 저장 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 일반 그리기에서 저장된 그림에 AI 분석 결과 업데이트
+  const updateSavedDrawing = async (drawingId, analysisResult) => {
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`http://localhost:5000/api/drawings/${drawingId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          analysis_result: analysisResult
+        })
+      })
+
+      if (response.ok) {
+        console.log('저장된 그림 AI 분석 결과 업데이트 완료')
+        // 로컬 스토리지에 분석 완료 플래그 저장
+        localStorage.setItem('analysisCompleted', 'true')
+      } else {
+        console.error('저장된 그림 업데이트 실패')
+      }
+    } catch (error) {
+      console.error('저장된 그림 업데이트 오류:', error)
     }
   }
 
@@ -84,6 +115,40 @@ function Analysis() {
         const data = await response.json()
         if (data.success) {
           setSpeechAnalysis(data.response)
+          // 갤러리에서 온 경우 AI 분석 내용을 포함하여 업데이트
+          if (isFromGallery && galleryDrawingId) {
+            // 로컬 스토리지에서 분석 결과를 다시 가져와서 AI 분석 내용과 합치기
+            const savedAnalysis = localStorage.getItem('analysisResult')
+            if (savedAnalysis) {
+              try {
+                const parsedAnalysis = JSON.parse(savedAnalysis)
+                const analysisWithSpeech = {
+                  ...parsedAnalysis,
+                  ai_analysis: data.response
+                }
+                updateGalleryDrawing(analysisWithSpeech)
+              } catch (error) {
+                console.error('분석 결과 파싱 오류:', error)
+              }
+            }
+          }
+          
+          // 일반 그리기에서 저장된 그림도 AI 분석 내용으로 업데이트
+          if (!isFromGallery && savedDrawingId) {
+            const savedAnalysis = localStorage.getItem('analysisResult')
+            if (savedAnalysis) {
+              try {
+                const parsedAnalysis = JSON.parse(savedAnalysis)
+                const analysisWithSpeech = {
+                  ...parsedAnalysis,
+                  ai_analysis: data.response
+                }
+                updateSavedDrawing(savedDrawingId, analysisWithSpeech)
+              } catch (error) {
+                console.error('분석 결과 파싱 오류:', error)
+              }
+            }
+          }
         } else {
           setSpeechAnalysis('분석 결과를 처리하는 중 오류가 발생했습니다.')
         }
@@ -112,6 +177,12 @@ function Analysis() {
       } catch (error) {
         console.error('갤러리 데이터 로드 실패:', error)
       }
+    }
+    
+    // 일반 그리기에서 저장된 그림 ID 확인
+    const savedDrawingId = localStorage.getItem('savedDrawingId')
+    if (savedDrawingId) {
+      setSavedDrawingId(savedDrawingId)
     }
     
     // 로컬 스토리지에서 그린 그림과 분석 결과 가져오기
@@ -170,7 +241,12 @@ function Analysis() {
         
         // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
         if (isFromGallery) {
-          updateGalleryDrawing(parsedAnalysis)
+          // AI 심리 분석 내용을 포함하여 업데이트
+          const analysisWithSpeech = {
+            ...parsedAnalysis,
+            ai_analysis: speechAnalysis || 'AI가 따뜻한 심리 분석을 준비하고 있습니다...'
+          }
+          updateGalleryDrawing(analysisWithSpeech)
         }
         
         // 챗봇 분석 요청

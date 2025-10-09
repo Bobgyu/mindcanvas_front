@@ -118,6 +118,8 @@ function Person() {
 
       if (response.data.success) {
         alert("그림이 성공적으로 저장되었습니다!");
+        // 저장된 그림 ID를 로컬 스토리지에 저장
+        localStorage.setItem('savedDrawingId', response.data.drawing_id);
         navigate('/mypage/gallery');
         return true;
       } else {

@@ -9,6 +9,9 @@ import MyPage from './MyPage.jsx'
 import MainPage from './MainPage.jsx'
 import MyGallery from './MyGallery.jsx' // MyGallery 임포트
 import Coordinator from './Coordinator.jsx'
+import CoordinatorFind from './CoordinatorFind.jsx'
+import Chat from './Chat.jsx'
+import ChatList from './ChatList.jsx'
 import Home from './draw/home.jsx'
 import Analysis from './draw/analysis.jsx'
 import Tree from './draw/tree.jsx'
@@ -33,6 +36,9 @@ createRoot(document.getElementById('root')).render(
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/mypage/gallery" element={<MyGallery />} /> {/* MyGallery 라우팅 추가 */}
         <Route path="/mypage/coordinator" element={<Coordinator />} />
+        <Route path="/coordinator" element={<CoordinatorFind />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/chat-list" element={<ChatList />} />
         <Route path="/draw/home" element={<Home />} />
         <Route path="/draw/analysis" element={<Analysis />} />
         <Route path="/draw/tree" element={<Tree />} />

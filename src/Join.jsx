@@ -139,8 +139,8 @@ function Join() {
   };
 
   return (
-    <div className="w-[29rem] h-[58rem] rounded-3xl bg-white flex flex-col">
-      <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
+    <div className="w-[29rem] h-[58rem] rounded-3xl bg-white flex flex-col overflow-hidden">
+      <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between flex-shrink-0">
         <button className="text-gray-600" onClick={() => navigate(-1)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -161,7 +161,7 @@ function Join() {
         <div className="w-6"></div> {/* Placeholder for alignment */}
       </header>
 
-      <main className="flex-grow p-6">
+      <main className="flex-grow p-6 overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 아이디 (이메일) */}
           <div>

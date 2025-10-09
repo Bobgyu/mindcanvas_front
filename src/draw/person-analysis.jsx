@@ -8,8 +8,14 @@ function PersonAnalysis() {
   const [analyzedImage, setAnalyzedImage] = useState(null)
   const [selectedGender, setSelectedGender] = useState(null)
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
+  const [savedDrawingId, setSavedDrawingId] = useState(null)
 
   const handleBack = () => {
+    // 로컬 스토리지 정리
+    localStorage.removeItem('savedDrawingId')
+    localStorage.removeItem('drawnPersonImage')
+    localStorage.removeItem('personAnalysisResult')
+    localStorage.removeItem('selectedGender')
     navigate('/draw/person')
   }
 
@@ -19,6 +25,33 @@ function PersonAnalysis() {
 
   const findCounselingCenter = () => {
     navigate('/counseling-center')
+  }
+
+  // 저장된 그림에 AI 분석 결과 업데이트
+  const updateSavedDrawing = async (drawingId, analysisResult) => {
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`http://localhost:5000/api/drawings/${drawingId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          analysis_result: analysisResult
+        })
+      })
+
+      if (response.ok) {
+        console.log('저장된 그림 AI 분석 결과 업데이트 완료')
+        // 로컬 스토리지에 분석 완료 플래그 저장
+        localStorage.setItem('analysisCompleted', 'true')
+      } else {
+        console.error('저장된 그림 업데이트 실패')
+      }
+    } catch (error) {
+      console.error('저장된 그림 업데이트 오류:', error)
+    }
   }
 
   const getChatbotAnalysis = async (analysisData) => {
@@ -40,6 +73,22 @@ function PersonAnalysis() {
         const data = await response.json()
         if (data.success) {
           setSpeechAnalysis(data.response)
+          // 저장된 그림에 AI 분석 결과 업데이트
+          if (savedDrawingId) {
+            const savedAnalysis = localStorage.getItem('personAnalysisResult')
+            if (savedAnalysis) {
+              try {
+                const parsedAnalysis = JSON.parse(savedAnalysis)
+                const analysisWithSpeech = {
+                  ...parsedAnalysis,
+                  ai_analysis: data.response
+                }
+                updateSavedDrawing(savedDrawingId, analysisWithSpeech)
+              } catch (error) {
+                console.error('분석 결과 파싱 오류:', error)
+              }
+            }
+          }
         } else {
           setSpeechAnalysis('분석 결과를 처리하는 중 오류가 발생했습니다.')
         }
@@ -55,6 +104,12 @@ function PersonAnalysis() {
   }
 
   useEffect(() => {
+    // 저장된 그림 ID 가져오기
+    const savedDrawingId = localStorage.getItem('savedDrawingId')
+    if (savedDrawingId) {
+      setSavedDrawingId(savedDrawingId)
+    }
+    
     // 로컬 스토리지에서 그린 그림과 분석 결과 가져오기
     const savedDrawnImage = localStorage.getItem('drawnPersonImage')
     const savedAnalysis = localStorage.getItem('personAnalysisResult')

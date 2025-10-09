@@ -204,7 +204,7 @@ function MainPage() {
         }}>
           <img src="/src/imgdata/icon/PAINT BRUSH.png" alt="그리기" style={{ width: '32px', height: '32px' }} />
         </button>
-        <button className='lower-option' style={{
+        <button className='lower-option' onClick={() => navigate('/chat-list', { state: { fromMainPage: true } })} style={{
           backgroundColor: '#CEF4E7',
           border: 'none',
           borderRadius: '50%',

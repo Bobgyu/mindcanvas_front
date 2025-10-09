@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import Chatbot from './Chatbot.jsx'
 
 function MyPage() {
   const [count, setCount] = useState(0)
   const [userInfo, setUserInfo] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false)
 
   const navigate = useNavigate()
+
+  const openChatbot = () => {
+    setIsChatbotOpen(true)
+  }
+
+  const closeChatbot = () => {
+    setIsChatbotOpen(false)
+  }
 
   // 사용자 정보 조회
   useEffect(() => {
@@ -136,7 +146,7 @@ function MyPage() {
         }}>
           <img src="/src/imgdata/icon/PAINT BRUSH.png" alt="그리기" style={{ width: '32px', height: '32px' }} />
         </button>
-        <button className='lower-option' style={{
+        <button className='lower-option' onClick={() => navigate('/chat-list', { state: { fromMyPage: true } })} style={{
           backgroundColor: '#CEF4E7',
           border: 'none',
           borderRadius: '50%',
@@ -150,7 +160,7 @@ function MyPage() {
         }}>
           <img src="/src/imgdata/icon/chat.png" alt="채팅" style={{ width: '32px', height: '32px' }} />
         </button>
-        <button className='lower-option' style={{
+        <button className='lower-option' onClick={openChatbot} style={{
           backgroundColor: '#CEF4E7',
           border: 'none',
           borderRadius: '50%',
@@ -180,6 +190,9 @@ function MyPage() {
         </button>
       </div>
     </div>
+    
+    {/* 챗봇 모달 */}
+    <Chatbot isOpen={isChatbotOpen} onClose={closeChatbot} />
     </>
   )
 }
