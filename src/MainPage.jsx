@@ -105,8 +105,27 @@ function MainPage() {
 
   return (
     <>
-    <div className='options'>
-      <div className='picture-options'>
+    {/* 상단 로고 이미지 */}
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      paddingTop: '10px',
+      marginBottom: '0'
+    }}>
+      <img 
+        src="/src/imgdata/icon/imgtext.png" 
+        alt="MINDCANVAS" 
+        style={{ 
+          width: '200px', 
+          height: 'auto',
+          display: 'block'
+        }} 
+      />
+    </div>
+    
+    <div className='options' style={{ marginTop: '0', paddingTop: '0', height: '80%' }}>
+      <div className='picture-options' style={{ marginTop: '0' }}>
         <h2 style={{ fontWeight: '800', fontSize: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
             display: 'inline-flex',

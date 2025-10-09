@@ -16,10 +16,24 @@ function App() {
 
   return (
     <>
-      <div className='logo-area'></div>
-      <div className='login-area'>
+      <div className='logo-area' style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        padding: '80px 0 40px 0'
+      }}>
+        <img 
+          src="/src/imgdata/icon/logo.png" 
+          alt="MINDCANVAS" 
+          style={{ 
+            width: '400px', 
+            height: 'auto',
+            display: 'block'
+          }} 
+        />
+      </div>
+      <div className='login-area' style={{ marginTop: '60px' }}>
         <input type="button" className='login-button' value="로그인" onClick={handleLogin}/>
-        <input type="button" className='login-button' value="구글 로그인"/>
         <p 
           className='join'
           onClick={handleJoin}   // ✅ 클릭 시 이동

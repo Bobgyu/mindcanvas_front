@@ -86,7 +86,26 @@ function MyPage() {
 
   return (
     <>
-    <div className='upper-options'>
+    {/* 상단 로고 이미지 */}
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      paddingTop: '10px',
+      marginBottom: '0'
+    }}>
+      <img 
+        src="/src/imgdata/icon/imgtext.png" 
+        alt="MINDCANVAS" 
+        style={{ 
+          width: '200px', 
+          height: 'auto',
+          display: 'block'
+        }} 
+      />
+    </div>
+    
+    <div className='upper-options' style={{ marginTop: '0', paddingTop: '0', height: '80%' }}>
       {/* 관리자 배지 - 작게 */}
       {userInfo && userInfo.is_admin && (
         <div style={{
@@ -108,8 +127,6 @@ function MyPage() {
       <input type="button" className='upper-option' value="내 그림(작품) 보기 (+분석결과)" onClick={() => navigate('/mypage/gallery')} />
       <input type="button" className='upper-option' value="마음일기 보기" onClick={() => navigate('/diary/list')} />
       <input type="button" className='upper-option' value="마음코디네이터" onClick={handleCoordinator}/>
-      <input type="button" className='upper-option' value="정보변경" />
-      <input type="button" className='upper-option' value="공지사항" />
       <input type="button" className='upper-option' value="로그아웃" onClick={handleLogout} style={{backgroundColor: 'rgb(39, 192, 141)', color: 'white'}} />
     </div>
     {/* 네비게이션 바 외부 컨테이너 */}
