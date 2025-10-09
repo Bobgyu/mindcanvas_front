@@ -22,7 +22,12 @@ function ChatList() {
 
   const fetchChatRooms = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/chat/rooms')
+      const token = localStorage.getItem('authToken')
+      const response = await axios.get('http://localhost:5000/api/chat/rooms', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       
       if (response.data.success) {
         const rooms = response.data.chat_rooms.map(room => ({
@@ -53,9 +58,13 @@ function ChatList() {
     if (location.state?.fromMainPage) {
       navigate('/mainpage')
     } 
-    // 마이페이지에서 온 경우 마이페이지로 돌아가기
-    else if (location.state?.fromMyPage) {
+    // 마이페이지 하단바 채팅 버튼에서 온 경우 마이페이지로 돌아가기
+    else if (location.state?.fromMyPageChat) {
       navigate('/mypage')
+    }
+    // 마이페이지에서 온 경우 마음코디네이터 페이지로 돌아가기
+    else if (location.state?.fromMyPage) {
+      navigate('/mypage/coordinator')
     } 
     else {
       navigate(-1)
@@ -69,7 +78,18 @@ function ChatList() {
       name: chatRoom.coordinator_name,
       institution: chatRoom.coordinator_institution
     }
-    navigate('/chat', { state: { coordinator, fromMainPage: location.state?.fromMainPage, fromMyPage: location.state?.fromMyPage } })
+    navigate('/chat', { state: { coordinator, fromMainPage: location.state?.fromMainPage, fromMyPage: location.state?.fromMyPage, fromMyPageChat: location.state?.fromMyPageChat } })
+  }
+
+  const handleViewCoordinator = (chatRoom, e) => {
+    e.stopPropagation() // 채팅방 클릭 이벤트 방지
+    // 코디네이터 정보를 state로 전달하여 코디네이터 페이지로 이동
+    const coordinator = {
+      id: chatRoom.coordinator_id,
+      name: chatRoom.coordinator_name,
+      institution: chatRoom.coordinator_institution
+    }
+    navigate('/coordinator', { state: { coordinator } })
   }
 
   const formatTime = (timeString) => {
@@ -153,6 +173,15 @@ function ChatList() {
                         {chatRoom.coordinator_name} 코디네이터
                       </h3>
                       <div className="flex items-center space-x-2">
+                        <button
+                          onClick={(e) => handleViewCoordinator(chatRoom, e)}
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
+                          title="코디네이터 정보 보기"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </button>
                         <span className="text-xs text-gray-500">
                           {formatTime(chatRoom.last_message_time)}
                         </span>

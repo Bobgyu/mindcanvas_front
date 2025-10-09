@@ -57,7 +57,7 @@ function CoordinatorFind() {
 
   const handleChat = () => {
     if (selectedCoordinator) {
-      navigate('/chat', { state: { coordinator: selectedCoordinator } })
+      navigate('/chat', { state: { coordinator: selectedCoordinator, fromMyPage: true } })
     } else {
       alert('먼저 코디네이터를 선택해주세요!')
     }
@@ -66,6 +66,11 @@ function CoordinatorFind() {
   const handleCoordinatorClick = (coordinator) => {
     // 코디네이터 카드 클릭 시 해당 코디네이터를 선택
     setSelectedCoordinator(coordinator)
+  }
+
+  const handleViewDetails = (coordinator) => {
+    // 코디네이터 상세 정보 보기
+    navigate('/coordinator', { state: { coordinator } })
   }
 
   const handleWishlist = (coordinatorId) => {
@@ -150,6 +155,19 @@ function CoordinatorFind() {
                         <p className="font-medium text-gray-800">{coordinator.institution}</p>
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* 상세보기 버튼 */}
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleViewDetails(coordinator)
+                      }}
+                      className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      상세보기
+                    </button>
                   </div>
                 </div>
               </div>

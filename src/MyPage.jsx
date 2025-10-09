@@ -146,7 +146,7 @@ function MyPage() {
         }}>
           <img src="/src/imgdata/icon/PAINT BRUSH.png" alt="그리기" style={{ width: '32px', height: '32px' }} />
         </button>
-        <button className='lower-option' onClick={() => navigate('/chat-list', { state: { fromMyPage: true } })} style={{
+        <button className='lower-option' onClick={() => navigate('/chat-list', { state: { fromMyPageChat: true } })} style={{
           backgroundColor: '#CEF4E7',
           border: 'none',
           borderRadius: '50%',

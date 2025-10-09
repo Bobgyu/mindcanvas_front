@@ -12,6 +12,8 @@ function Chat() {
   const coordinator = location.state?.coordinator
   const fromMainPage = location.state?.fromMainPage
   const fromMyPage = location.state?.fromMyPage
+  const fromMyPageChat = location.state?.fromMyPageChat
+  const fromCoordinator = location.state?.fromCoordinator
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -69,7 +71,14 @@ function Chat() {
   }
 
   const handleBack = () => {
-    navigate('/chat-list', { state: { refresh: true, fromMainPage, fromMyPage } })
+    // Coordinator 페이지에서 온 경우 Coordinator 페이지로 돌아가기
+    if (fromCoordinator) {
+      navigate('/mypage/coordinator', { state: { coordinator } })
+    }
+    // 그렇지 않으면 기존 로직대로 ChatList로 이동
+    else {
+      navigate('/chat-list', { state: { refresh: true, fromMainPage, fromMyPage, fromMyPageChat } })
+    }
   }
 
   const sendMessage = async () => {
