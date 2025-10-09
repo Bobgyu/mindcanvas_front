@@ -16,10 +16,12 @@ function Fillcanvas() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
-  const [currentTool, setCurrentTool] = useState('brush') // 'brush' 또는 'eraser'
+  const [currentTool, setCurrentTool] = useState('brush') // 'brush', 'eraser', 또는 'paintbucket'
   const [originalImageData, setOriginalImageData] = useState(null)
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
   const [showCursor, setShowCursor] = useState(false)
+  const [paintTolerance, setPaintTolerance] = useState(30) // 페인트통 허용 오차 (0-100)
+  const [showPaintTolerance, setShowPaintTolerance] = useState(false) // 페인트통 허용 오차 UI 표시 여부
 
   // 색상 팔레트
   const colorPalette = [
@@ -97,6 +99,112 @@ function Fillcanvas() {
     img.src = `/src/imgdata/colorimg/${selectedImage.filename}`
   }
 
+  // Flood Fill 알고리즘 구현 (색상 허용 오차 추가)
+  const floodFill = (e) => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const rect = canvas.getBoundingClientRect()
+    
+    // 캔버스 중심점 기준으로 좌표 계산
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    
+    // 마우스 위치를 캔버스 중심점 기준으로 변환
+    const mouseX = e.clientX - centerX
+    const mouseY = e.clientY - centerY
+    
+    // 줌과 팬을 고려한 실제 캔버스 좌표 계산
+    const x = Math.floor((mouseX - panOffset.x) / zoom + canvas.width / 2)
+    const y = Math.floor((mouseY - panOffset.y) / zoom + canvas.height / 2)
+
+    // 캔버스 경계 체크
+    if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) {
+      return
+    }
+
+    // 현재 이미지 데이터 가져오기
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const data = imageData.data
+    
+    // 클릭한 지점의 색상 가져오기
+    const targetIndex = (y * canvas.width + x) * 4
+    const targetR = data[targetIndex]
+    const targetG = data[targetIndex + 1]
+    const targetB = data[targetIndex + 2]
+    const targetA = data[targetIndex + 3]
+    
+    // 선택된 색상
+    const fillColor = hexToRgb(selectedColor)
+    
+    // 같은 색상이면 리턴
+    if (targetR === fillColor.r && targetG === fillColor.g && targetB === fillColor.b) {
+      return
+    }
+    
+    // 색상 허용 오차 (0-100, 클수록 더 관대하게)
+    const tolerance = paintTolerance
+    
+    // 색상 차이 계산 함수
+    const colorDifference = (r1, g1, b1, r2, g2, b2) => {
+      return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
+    }
+    
+    // Flood Fill 실행
+    const stack = [{ x, y }]
+    const visited = new Set()
+    
+    while (stack.length > 0) {
+      const { x: currentX, y: currentY } = stack.pop()
+      const key = `${currentX},${currentY}`
+      
+      if (visited.has(key)) continue
+      if (currentX < 0 || currentX >= canvas.width || currentY < 0 || currentY >= canvas.height) continue
+      
+      const currentIndex = (currentY * canvas.width + currentX) * 4
+      const currentR = data[currentIndex]
+      const currentG = data[currentIndex + 1]
+      const currentB = data[currentIndex + 2]
+      const currentA = data[currentIndex + 3]
+      
+      // 색상 차이 계산 (허용 오차 내에 있는지 확인)
+      const diff = colorDifference(targetR, targetG, targetB, currentR, currentG, currentB)
+      
+      // 색상이 너무 다르면 스킵 (경계선 감지)
+      if (diff > tolerance) {
+        continue
+      }
+      
+      visited.add(key)
+      
+      // 색칠하기
+      data[currentIndex] = fillColor.r
+      data[currentIndex + 1] = fillColor.g
+      data[currentIndex + 2] = fillColor.b
+      data[currentIndex + 3] = 255
+      
+      // 4방향으로 확장
+      stack.push(
+        { x: currentX + 1, y: currentY },
+        { x: currentX - 1, y: currentY },
+        { x: currentX, y: currentY + 1 },
+        { x: currentX, y: currentY - 1 }
+      )
+    }
+    
+    // 수정된 이미지 데이터를 캔버스에 다시 그리기
+    ctx.putImageData(imageData, 0, 0)
+  }
+
+  // 헥스 색상을 RGB로 변환하는 함수
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 }
+  }
+
   const loadColoredImage = (coloredImageData) => {
     if (!coloredImageData) {
       console.error('색칠 이미지 데이터가 없습니다.')
@@ -163,8 +271,13 @@ function Fillcanvas() {
       e.preventDefault()
     }
     if (e.button === 0) { // 왼쪽 마우스 버튼만 그리기
-      setIsDrawing(true)
-      draw(e)
+      if (currentTool === 'paintbucket') {
+        // 페인트통 도구인 경우 flood fill 실행
+        floodFill(e)
+      } else {
+        setIsDrawing(true)
+        draw(e)
+      }
     } else if (e.button === 1 || e.button === 2) { // 가운데 또는 오른쪽 버튼은 팬
       setIsPanning(true)
       setLastPanPoint({ x: e.clientX, y: e.clientY })
@@ -284,8 +397,40 @@ function Fillcanvas() {
     const canvasX = (mouseX - panOffset.x) / zoom + canvas.width / 2
     const canvasY = (mouseY - panOffset.y) / zoom + canvas.height / 2
     
-    setCursorPos({ x: canvasX, y: canvasY })
-    setShowCursor(true)
+    // 마우스가 canvas-wrapper 영역 내에 있는지 확인
+    const wrapperRect = canvas.parentElement.parentElement.getBoundingClientRect()
+    const isInsideWrapper = e.clientX >= wrapperRect.left && 
+                           e.clientX <= wrapperRect.right && 
+                           e.clientY >= wrapperRect.top && 
+                           e.clientY <= wrapperRect.bottom
+    
+    // 줌 레벨에 따른 동적 마진 계산
+    const baseMargin = Math.max(brushSize * 2, 50)
+    const zoomMargin = baseMargin * zoom // 줌에 비례하여 마진 증가
+    const isInsideCanvas = canvasX >= -zoomMargin && 
+                          canvasX <= canvas.width + zoomMargin && 
+                          canvasY >= -zoomMargin && 
+                          canvasY <= canvas.height + zoomMargin
+    
+    // 캔버스 좌표를 경계 내로 제한 (줌을 고려한 더 유연한 제한)
+    const toolSize = currentTool === 'paintbucket' ? 24 : brushSize
+    const halfSize = toolSize / 2
+    const clampedX = Math.max(halfSize, Math.min(canvas.width - halfSize, canvasX))
+    const clampedY = Math.max(halfSize, Math.min(canvas.height - halfSize, canvasY))
+    
+    // 줌 상태에서 더 관대한 경계 체크
+    const zoomTolerance = Math.max(10, 20 / zoom) // 줌이 클수록 더 관대하게
+    const finalCheck = clampedX >= halfSize - zoomTolerance && 
+                      clampedX <= canvas.width - halfSize + zoomTolerance && 
+                      clampedY >= halfSize - zoomTolerance && 
+                      clampedY <= canvas.height - halfSize + zoomTolerance
+    
+    if (isInsideWrapper && isInsideCanvas && finalCheck) {
+      setCursorPos({ x: clampedX, y: clampedY })
+      setShowCursor(true)
+    } else {
+      setShowCursor(false)
+    }
     
     if (isPanning) {
       const deltaX = e.clientX - lastPanPoint.x
@@ -299,6 +444,7 @@ function Fillcanvas() {
       draw(e)
     }
   }
+
 
   const handleWheel = (e) => {
     // passive 이벤트 리스너 문제 해결
@@ -362,6 +508,8 @@ function Fillcanvas() {
       setZoom(1)
       setPanOffset({ x: 0, y: 0 })
       setCurrentTool('brush') // 초기화 시 브러시 모드로 전환
+      setShowBrushSize(false)
+      setShowColorPicker(false)
     }
   }
 
@@ -510,8 +658,9 @@ function Fillcanvas() {
               transformOrigin: 'center center'
             }}
             onMouseDown={(e) => e.cancelable && e.preventDefault()}
-            onMouseMove={(e) => e.cancelable && e.preventDefault()}
+            onMouseMove={handleMouseMove}
             onMouseUp={(e) => e.cancelable && e.preventDefault()}
+            onMouseLeave={() => setShowCursor(false)}
           >
             <canvas
               ref={canvasRef}
@@ -539,17 +688,28 @@ function Fillcanvas() {
               <div
                 style={{
                   position: 'absolute',
-                  left: cursorPos.x - brushSize / 2,
-                  top: cursorPos.y - brushSize / 2,
-                  width: brushSize,
-                  height: brushSize,
-                  borderRadius: currentTool === 'eraser' ? '0%' : '50%',
-                  border: `2px solid ${currentTool === 'eraser' ? 'red' : selectedColor}`,
+                  left: Math.max(0, Math.min(canvasSize.width - (currentTool === 'paintbucket' ? 32 : brushSize), cursorPos.x - (currentTool === 'paintbucket' ? 16 : brushSize / 2))),
+                  top: Math.max(0, Math.min(canvasSize.height - (currentTool === 'paintbucket' ? 32 : brushSize), cursorPos.y - (currentTool === 'paintbucket' ? 16 : brushSize / 2))),
+                  width: currentTool === 'paintbucket' ? 32 : brushSize,
+                  height: currentTool === 'paintbucket' ? 32 : brushSize,
+                  borderRadius: (currentTool === 'eraser' || currentTool === 'paintbucket') ? '0%' : '50%',
+                  border: currentTool === 'paintbucket' ? 'none' : `2px solid ${currentTool === 'eraser' ? 'red' : selectedColor}`,
                   backgroundColor: 'transparent',
+                  backgroundImage: currentTool === 'paintbucket' ? `url('/src/imgdata/icon/Paint.png')` : 'none',
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
                   pointerEvents: 'none',
                   zIndex: 10,
                   transition: 'none',
-                  transform: `scale(${1/zoom})` // 줌에 반비례하여 커서 크기 조정
+                  transform: `scale(${1/zoom})`, // 줌에 반비례하여 커서 크기 조정
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0px',
+                  // 줌 상태에서 더 유연한 경계 제한
+                  maxWidth: `${canvasSize.width + (zoom > 1 ? 50 : 0)}px`,
+                  maxHeight: `${canvasSize.height + (zoom > 1 ? 50 : 0)}px`,
+                  overflow: 'visible' // 줌 상태에서 커서가 잘리지 않도록
                 }}
               />
             )}
@@ -580,6 +740,7 @@ function Fillcanvas() {
               setCurrentTool('brush')
               setShowBrushSize(!showBrushSize)
               setShowColorPicker(false)
+              setShowPaintTolerance(false)
             }}
             style={{ 
               width: '50px', 
@@ -685,31 +846,14 @@ function Fillcanvas() {
           )}
         </div>
         
-        {/* 지우개 버튼 */}
-        <button 
-          onClick={() => setCurrentTool('eraser')}
-          style={{ 
-            width: '50px', 
-            height: '50px', 
-            borderRadius: '50%', 
-            border: currentTool === 'eraser' ? '3px solid #3a9d1f' : '1px solid #ccc',
-            backgroundColor: currentTool === 'eraser' ? '#e8f5e8' : '#F9FAF9',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-          }}
-        >
-          <img src="/src/imgdata/icon/eraser.png" alt="지우개" style={{ width: '32px', height: '32px' }} />
-        </button>
-        
         {/* 팔레트 버튼 */}
         <div style={{ position: 'relative' }}>
           <button 
-            onClick={() => setShowColorPicker(!showColorPicker)}
+            onClick={() => {
+              setShowColorPicker(!showColorPicker)
+              setShowBrushSize(false)
+              setShowPaintTolerance(false)
+            }}
             style={{ 
               width: '50px', 
               height: '50px', 
@@ -836,6 +980,144 @@ function Fillcanvas() {
             </div>
           )}
         </div>
+        
+        {/* 페인트통 버튼 */}
+        <div style={{ position: 'relative' }}>
+          <button 
+          onClick={() => {
+            if (currentTool === 'paintbucket') {
+              // 페인트통이 이미 선택된 상태면 UI 토글
+              setShowPaintTolerance(!showPaintTolerance)
+            } else {
+              // 페인트통 선택
+              setCurrentTool('paintbucket')
+              setShowPaintTolerance(true)
+            }
+            setShowBrushSize(false)
+            setShowColorPicker(false)
+          }}
+            style={{ 
+              width: '50px', 
+              height: '50px', 
+              borderRadius: '50%', 
+              border: currentTool === 'paintbucket' ? '3px solid #3a9d1f' : '1px solid #ccc',
+              backgroundColor: currentTool === 'paintbucket' ? '#e8f5e8' : '#F9FAF9',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+            }}
+          >
+            <img src="/src/imgdata/icon/Paint.png" alt="페인트통" style={{ width: '32px', height: '32px' }} />
+          </button>
+          
+          {/* 페인트통 허용 오차 드롭다운 */}
+          {currentTool === 'paintbucket' && showPaintTolerance && (
+            <div style={{
+              position: 'absolute',
+              bottom: '70px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#F9FAF9',
+              border: '1px solid #ccc',
+              borderRadius: '10px',
+              padding: '15px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              zIndex: 200,
+              minWidth: '200px'
+            }}>
+              <div style={{ 
+                fontSize: '14px', 
+                fontWeight: 'bold', 
+                textAlign: 'center',
+                color: '#333'
+              }}>
+                색상 허용 오차: {paintTolerance}
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={paintTolerance} 
+                onChange={(e) => setPaintTolerance(parseInt(e.target.value))}
+                style={{ 
+                  width: '100%',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: '#ddd',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                fontSize: '12px',
+                color: '#666'
+              }}>
+                <span>정확함</span>
+                <span>관대함</span>
+              </div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(3, 1fr)', 
+                gap: '8px',
+                justifyItems: 'center'
+              }}>
+                {[10, 30, 50, 70, 90].map((tolerance) => (
+                  <button
+                    key={tolerance}
+                    onClick={() => setPaintTolerance(tolerance)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: paintTolerance === tolerance ? '2px solid #3a9d1f' : '1px solid #ddd',
+                      backgroundColor: paintTolerance === tolerance ? '#e8f5e8' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {tolerance}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* 지우개 버튼 */}
+        <button 
+          onClick={() => {
+            setCurrentTool('eraser')
+            setShowBrushSize(false)
+            setShowColorPicker(false)
+            setShowPaintTolerance(false)
+          }}
+          style={{ 
+            width: '50px', 
+            height: '50px', 
+            borderRadius: '50%', 
+            border: currentTool === 'eraser' ? '3px solid #3a9d1f' : '1px solid #ccc',
+            backgroundColor: currentTool === 'eraser' ? '#e8f5e8' : '#F9FAF9',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+          }}
+        >
+          <img src="/src/imgdata/icon/eraser.png" alt="지우개" style={{ width: '32px', height: '32px' }} />
+        </button>
       </div>
 
       <style>{`
