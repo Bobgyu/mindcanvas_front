@@ -18,6 +18,7 @@ function Theme() {
   const [isPanning, setIsPanning] = useState(false)
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
   const [currentTheme, setCurrentTheme] = useState('')
+  const [modal, setModal] = useState({ show: false, message: '', type: '' })
 
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB']
 
@@ -146,8 +147,12 @@ function Theme() {
   const saveDrawingToBackend = async (imageData) => {
     const token = localStorage.getItem('authToken');
     if (!token) {
-      alert("로그인이 필요합니다.");
-      navigate('/login');
+      setModal({ 
+        show: true, 
+        message: "로그인이 필요합니다.", 
+        type: 'warning' 
+      });
+      setTimeout(() => navigate('/login'), 2000);
       return false;
     }
 
@@ -163,24 +168,41 @@ function Theme() {
       });
 
       if (response.data.success) {
-        alert("그림이 성공적으로 저장되었습니다!");
-        // 갤러리로 이동
-        navigate('/mypage/gallery');
+        setModal({ 
+          show: true, 
+          message: "그림이 성공적으로 저장되었습니다!", 
+          type: 'success' 
+        });
+        // 갤러리로 자동 이동 (테마그리기에서 온 것을 표시)
+        localStorage.setItem('fromThemeDrawing', 'true');
+        setTimeout(() => navigate('/mypage/gallery'), 2000);
         return true;
       } else {
-        alert("그림 저장에 실패했습니다: " + response.data.error);
+        setModal({ 
+          show: true, 
+          message: "그림 저장에 실패했습니다: " + response.data.error, 
+          type: 'error' 
+        });
         return false;
       }
     } catch (error) {
       console.error("그림 저장 API 오류:", error);
       if (error.response?.status === 401) {
-        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+        setModal({ 
+          show: true, 
+          message: '로그인이 만료되었습니다. 다시 로그인해주세요.', 
+          type: 'warning' 
+        });
         localStorage.removeItem('authToken');
         localStorage.removeItem('userId');
         localStorage.removeItem('username');
-        navigate('/login');
+        setTimeout(() => navigate('/login'), 2000);
       } else {
-        alert("그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.");
+        setModal({ 
+          show: true, 
+          message: "그림 저장 중 오류가 발생했습니다. 백엔드 서버가 실행 중인지 확인해주세요.", 
+          type: 'error' 
+        });
       }
       return false;
     }
@@ -190,6 +212,10 @@ function Theme() {
     const canvas = canvasRef.current;
     const imageData = canvas.toDataURL('image/png');
     await saveDrawingToBackend(imageData);
+  };
+
+  const closeModal = () => {
+    setModal({ show: false, message: '', type: '' });
   };
 
   const selectColor = (color) => {
@@ -275,6 +301,121 @@ function Theme() {
 
   return (
     <>
+      {/* 모달 오버레이 */}
+      {modal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            margin: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 모달 아이콘 */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              {modal.type === 'success' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#d4edda',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#28a745' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'error' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#dc3545' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'warning' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#ffc107' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* 모달 메시지 */}
+            <p style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '25px',
+              lineHeight: '1.5'
+            }}>
+              {modal.message}
+            </p>
+            
+            {/* 확인 버튼 */}
+            <button
+              onClick={closeModal}
+              style={{
+                width: '100%',
+                padding: '12px 24px',
+                backgroundColor: modal.type === 'success' ? 'rgb(39, 192, 141)' : 
+                               modal.type === 'error' ? '#dc3545' : '#ffc107',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.opacity = '0.9';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = '1';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 상단 저장 버튼 */}
       <div style={{ 
         position: 'absolute', 

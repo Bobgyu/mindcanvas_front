@@ -11,6 +11,7 @@ function Analysis() {
   const [isFromGallery, setIsFromGallery] = useState(false)
   const [galleryDrawingId, setGalleryDrawingId] = useState(null)
   const [savedDrawingId, setSavedDrawingId] = useState(null) // 일반 그리기에서 저장된 그림 ID
+  const [modal, setModal] = useState({ show: false, message: '', type: '' })
 
   const handleBack = () => {
     // 로컬 스토리지 정리
@@ -35,6 +36,10 @@ function Analysis() {
     navigate('/counseling-center')
   }
 
+  const closeModal = () => {
+    setModal({ show: false, message: '', type: '' });
+  };
+
   // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
   const updateGalleryDrawing = async (analysisResult) => {
     if (!isFromGallery || !galleryDrawingId) return
@@ -56,16 +61,28 @@ function Analysis() {
       if (response.ok) {
         console.log('갤러리 그림 분석 결과 업데이트 완료')
         // 성공 알림
-        alert('분석 결과가 저장되었습니다!')
-        // 로컬 스토리지에 분석 완료 플래그 저장
+        setModal({ 
+          show: true, 
+          message: '분석 결과가 저장되었습니다!', 
+          type: 'success' 
+        });
+        // 로컬 스토리지에 분석 완료 플래그 저장 (갤러리 자동 이동 방지)
         localStorage.setItem('analysisCompleted', 'true')
       } else {
         console.error('갤러리 그림 업데이트 실패')
-        alert('분석 결과 저장에 실패했습니다.')
+        setModal({ 
+          show: true, 
+          message: '분석 결과 저장에 실패했습니다.', 
+          type: 'error' 
+        });
       }
     } catch (error) {
       console.error('갤러리 그림 업데이트 오류:', error)
-      alert('분석 결과 저장 중 오류가 발생했습니다.')
+      setModal({ 
+        show: true, 
+        message: '분석 결과 저장 중 오류가 발생했습니다.', 
+        type: 'error' 
+      });
     }
   }
 
@@ -311,6 +328,121 @@ function Analysis() {
 
   return (
     <>
+      {/* 모달 오버레이 */}
+      {modal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            margin: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 모달 아이콘 */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              {modal.type === 'success' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#d4edda',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#28a745' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'error' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#dc3545' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'warning' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#ffc107' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* 모달 메시지 */}
+            <p style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '25px',
+              lineHeight: '1.5'
+            }}>
+              {modal.message}
+            </p>
+            
+            {/* 확인 버튼 */}
+            <button
+              onClick={closeModal}
+              style={{
+                width: '100%',
+                padding: '12px 24px',
+                backgroundColor: modal.type === 'success' ? 'rgb(39, 192, 141)' : 
+                               modal.type === 'error' ? '#dc3545' : '#ffc107',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.opacity = '0.9';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = '1';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CSS 애니메이션 */}
       <style>{`
         @keyframes typing {

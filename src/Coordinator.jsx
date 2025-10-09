@@ -6,6 +6,7 @@ function Coordinator() {
   const [count, setCount] = useState(0)
   const [coordinator, setCoordinator] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [modal, setModal] = useState({ show: false, message: '', type: '', onConfirm: null })
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -32,7 +33,56 @@ function Coordinator() {
         })
 
         if (response.data.success && response.data.coordinator) {
-          setCoordinator(response.data.coordinator)
+          // API에서 받은 코디네이터 정보를 CoordinatorFind.jsx의 데이터와 매칭
+          const coordinatorData = response.data.coordinator
+          
+          // CoordinatorFind.jsx의 코디네이터 데이터와 매칭하여 완전한 정보 구성
+          const coordinators = [
+            {
+              id: 1,
+              name: "김철호",
+              age: "70세",
+              region: "서울",
+              experience: "8년",
+              institution: "마음치료센터",
+              profile: "/src/imgdata/icon/마음코디네이터1.png"
+            },
+            {
+              id: 2,
+              name: "이말숙",
+              age: "69세", 
+              region: "부산",
+              experience: "5년",
+              institution: "정신건강원",
+              profile: "/src/imgdata/icon/마음코디네이터2.png"
+            },
+            {
+              id: 3,
+              name: "박수미",
+              age: "63세",
+              region: "대구", 
+              experience: "10년",
+              institution: "심리상담센터",
+              profile: "/src/imgdata/icon/마음코디네이터3.png"
+            },
+            {
+              id: 4,
+              name: "최준식",
+              age: "65세",
+              region: "인천", 
+              experience: "8년",
+              institution: "심리상담센터",
+              profile: "/src/imgdata/icon/마음코디네이터4.png"
+            }
+          ]
+          
+          // API에서 받은 코디네이터 ID로 매칭하여 완전한 정보 찾기
+          const matchedCoordinator = coordinators.find(c => c.id === coordinatorData.id)
+          if (matchedCoordinator) {
+            setCoordinator(matchedCoordinator)
+          } else {
+            setCoordinator(coordinatorData)
+          }
         } else {
           setCoordinator(null)
         }
@@ -55,7 +105,11 @@ function Coordinator() {
     if (coordinator) {
       navigate('/chat', { state: { coordinator, fromCoordinator: true, fromMyPage: true } })
     } else {
-      alert('코디네이터 정보가 없습니다.')
+      setModal({ 
+        show: true, 
+        message: '코디네이터 정보가 없습니다.', 
+        type: 'error' 
+      })
     }
   }
 
@@ -64,47 +118,74 @@ function Coordinator() {
     navigate('/coordinator')
   }
 
+  const closeModal = () => {
+    setModal({ show: false, message: '', type: '', onConfirm: null })
+  }
+
   const handleDisconnect = async () => {
     if (!coordinator) {
-      alert('코디네이터 정보가 없습니다.')
-      return
-    }
-
-    if (!window.confirm(`${coordinator.name} 코디네이터와의 연결을 끊으시겠습니까?\n\n연결을 끊어도 채팅 기록은 보존됩니다.`)) {
-      return
-    }
-
-    try {
-      const token = localStorage.getItem('authToken')
-      const response = await axios.post('http://localhost:5000/api/user/coordinator/disconnect', {
-        coordinator_id: coordinator.id
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      setModal({ 
+        show: true, 
+        message: '코디네이터 정보가 없습니다.', 
+        type: 'error' 
       })
-
-      if (response.data.success) {
-        alert(response.data.message)
-        // 코디네이터 정보 초기화
-        setCoordinator(null)
-        // 페이지 새로고침하여 코디네이터 없음 상태로 변경
-        window.location.reload()
-      } else {
-        alert('연결 끊기에 실패했습니다: ' + response.data.error)
-      }
-    } catch (error) {
-      console.error('코디네이터 연결 끊기 오류:', error)
-      if (error.response?.status === 401) {
-        alert('로그인이 만료되었습니다. 다시 로그인해주세요.')
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('userId')
-        localStorage.removeItem('username')
-        navigate('/login')
-      } else {
-        alert('연결 끊기 중 오류가 발생했습니다.')
-      }
+      return
     }
+
+    setModal({ 
+      show: true, 
+      message: `${coordinator.name} 코디네이터와의 연결을\n끊으시겠습니까?\n\n연결을 끊어도 채팅 기록은 보존됩니다.`, 
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('authToken')
+          const response = await axios.post('http://localhost:5000/api/user/coordinator/disconnect', {
+            coordinator_id: coordinator.id
+          }, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+
+          if (response.data.success) {
+            setModal({ 
+              show: true, 
+              message: response.data.message, 
+              type: 'success' 
+            })
+            // 코디네이터 정보 초기화
+            setCoordinator(null)
+            // 페이지 새로고침하여 코디네이터 없음 상태로 변경
+            setTimeout(() => window.location.reload(), 2000)
+          } else {
+            setModal({ 
+              show: true, 
+              message: '연결 끊기에 실패했습니다: ' + response.data.error, 
+              type: 'error' 
+            })
+          }
+        } catch (error) {
+          console.error('코디네이터 연결 끊기 오류:', error)
+          if (error.response?.status === 401) {
+            setModal({ 
+              show: true, 
+              message: '로그인이 만료되었습니다. 다시 로그인해주세요.', 
+              type: 'warning' 
+            })
+            localStorage.removeItem('authToken')
+            localStorage.removeItem('userId')
+            localStorage.removeItem('username')
+            setTimeout(() => navigate('/login'), 2000)
+          } else {
+            setModal({ 
+              show: true, 
+              message: '연결 끊기 중 오류가 발생했습니다.', 
+              type: 'error' 
+            })
+          }
+        }
+      }
+    })
   }
 
   // 로딩 중일 때
@@ -142,25 +223,28 @@ function Coordinator() {
         {/* 헤더 */}
         <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
           <div className="w-6"></div>
-          <h1 className="text-xl font-bold">마음코디네이터</h1>
+          <h1 className="text-xl font-bold" style={{color: '#111827'}}>마음코디네이터</h1>
           <div className="w-6"></div>
         </header>
 
         {/* 메인 콘텐츠 */}
         <main className="flex-grow p-6 flex items-center justify-center">
           <div className="text-center">
-            <div>아직 지정된 마음코디네이터가 없습니다.</div>
+            <div style={{color: '#111827'}}>아직 지정된 마음코디네이터가 없습니다.</div>
             <button 
               onClick={handleFindOther}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#27C08D',
+                backgroundColor: 'rgb(39, 192, 141)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '5px',
                 cursor: 'pointer',
-                marginTop: '20px'
+                marginTop: '20px',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#30E8AB'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
             >
               마음코디네이터 찾기
             </button>
@@ -171,7 +255,182 @@ function Coordinator() {
   }
 
   return (
-    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
+    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col relative" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
+      {/* 모달 오버레이 */}
+      {modal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            margin: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 모달 아이콘 */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              {modal.type === 'success' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#d4edda',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#28a745' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'error' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#dc3545' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'warning' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#ffc107' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* 모달 메시지 */}
+            <p style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '25px',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-line'
+            }}>
+              {modal.message}
+            </p>
+            
+            {/* 버튼들 */}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              {modal.type === 'warning' ? (
+                <>
+                  <button
+                    onClick={closeModal}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.opacity = '0.9';
+                      e.target.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.opacity = '1';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modal.onConfirm) {
+                        modal.onConfirm();
+                      }
+                      closeModal();
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.opacity = '0.9';
+                      e.target.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.opacity = '1';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    연결끊기
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={closeModal}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: modal.type === 'success' ? 'rgb(39, 192, 141)' : 
+                                   modal.type === 'error' ? '#dc3545' : '#ffc107',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.opacity = '0.9';
+                    e.target.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  확인
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 뒤로가기 버튼 */}
       <div style={{
         position: 'fixed',
@@ -185,20 +444,19 @@ function Coordinator() {
       </div>
 
       {/* 헤더 */}
-      <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
-        <div className="w-6"></div>
-        <h1 className="text-xl font-bold">마음코디네이터</h1>
-        <div className="w-6"></div>
-      </header>
+        <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
+          <div className="w-6"></div>
+          <h1 className="text-xl font-bold" style={{color: '#111827'}}>마음코디네이터</h1>
+          <div className="w-6"></div>
+        </header>
 
       {/* 메인 콘텐츠 */}
       <main className="flex-grow p-6">
       <div className='profile-area' style={{ 
         backgroundColor: 'white', 
         margin: '20px', 
-        borderRadius: '16px', 
-        padding: '16px',
-        paddingBottom: '50px',
+        borderRadius: '12px', 
+        padding: '39px 16px 50px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         border: '1px solid #F3F4F6',
         minHeight: '100px',
@@ -215,30 +473,44 @@ function Coordinator() {
         }}>
           {/* 프로필 사진 */}
           <div className='profile-picture' style={{ 
-            width: '80px', 
-            height: '80px', 
+            width: '100px', 
+            height: '100px', 
             borderRadius: '50%',
             backgroundColor: '#CEF4E7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             border: '3px solid rgb(39, 192, 141)',
-            flexShrink: 0
+            flexShrink: 0,
+            overflow: 'hidden'
           }}>
-            <div className='imsi-picture' style={{ 
-              width: '40px', 
-              height: '40px',
-              backgroundColor: 'rgb(39, 192, 141)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: '600'
-            }}>
-              {coordinator.name ? coordinator.name.charAt(0) : '?'}
-            </div>
+            {coordinator.profile ? (
+              <img 
+                src={coordinator.profile} 
+                alt="프로필" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '50%'
+                }}
+              />
+            ) : (
+              <div className='imsi-picture' style={{ 
+                width: '40px', 
+                height: '40px',
+                backgroundColor: 'rgb(39, 192, 141)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: '600'
+              }}>
+                {coordinator.name ? coordinator.name.charAt(0) : '?'}
+              </div>
+            )}
           </div>
           {/* 코디네이터 이름 */}
           <div className='coordi-introduce' style={{ 
@@ -267,7 +539,7 @@ function Coordinator() {
               {coordinator.name}님
             </h2>
             <div style={{ 
-              width: '40px', 
+              width: `${coordinator.name ? coordinator.name.length * 12 + 8 : 40}px`, 
               height: '3px', 
               backgroundColor: 'rgb(39, 192, 141)', 
               borderRadius: '2px',
@@ -313,7 +585,7 @@ function Coordinator() {
       <div className='info-area' style={{ 
         backgroundColor: 'white', 
         margin: '20px', 
-        borderRadius: '16px', 
+        borderRadius: '12px', 
         padding: '24px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         border: '1px solid #F3F4F6',
@@ -502,9 +774,9 @@ function Coordinator() {
                 }}>
                   심리상담, HTP 분석
                 </p>
-              </div>
-            </div>
           </div>
+        </div>
+      </div>
           
           {/* 버튼들 - 기본정보 섹션 하단에 배치 */}
           <div style={{ 
@@ -529,7 +801,7 @@ function Coordinator() {
                 flex: '1'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#30E8AB'
+                e.target.style.backgroundColor = 'rgb(35, 173, 127)'
                 e.target.style.transform = 'translateY(-1px)'
               }}
               onMouseLeave={(e) => {
@@ -591,11 +863,11 @@ function Coordinator() {
             >
               다른 마음코디네이터
             </button>
-          </div>
         </div>
       </div>
+      </div>
       </main>
-    </div>
+      </div>
   )
 }
 

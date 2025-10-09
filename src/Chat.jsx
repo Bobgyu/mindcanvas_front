@@ -237,8 +237,12 @@ function Chat() {
                   className={`flex items-end space-x-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
               {message.sender === 'coordinator' && (
-                <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xs text-gray-600">코</span>
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                  <img 
+                    src={coordinator.profile} 
+                    alt="코디네이터 프로필" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
               

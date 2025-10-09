@@ -6,6 +6,7 @@ function MyGallery() {
   const [drawings, setDrawings] = useState([]);
   const [error, setError] = useState('');
   const [selectedDrawing, setSelectedDrawing] = useState(null);
+  const [modal, setModal] = useState({ show: false, message: '', type: '' });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -161,7 +162,7 @@ function MyGallery() {
   // 페이지 포커스 시 데이터 새로고침 (분석 완료 후 갤러리로 돌아올 때)
   useEffect(() => {
     const handleFocus = () => {
-      // 분석 완료 플래그가 있으면 데이터 새로고침
+      // 분석 완료 플래그가 있으면 데이터 새로고침 (자동 이동 없이)
       if (localStorage.getItem('analysisCompleted')) {
         fetchDrawings();
         localStorage.removeItem('analysisCompleted');
@@ -188,63 +189,262 @@ function MyGallery() {
     setSelectedDrawing(null);
   };
 
+  const closeModal = () => {
+    setModal({ show: false, message: '', type: '' });
+  };
+
   const handleDeleteDrawing = async (drawingId) => {
-    if (!window.confirm('정말로 이 그림을 삭제하시겠습니까?')) {
-      return;
-    }
+    setModal({ 
+      show: true, 
+      message: '정말로 이 그림을 삭제하시겠습니까?', 
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('authToken');
+          const response = await axios.delete(`http://localhost:5000/api/drawings/${drawingId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.delete(`http://localhost:5000/api/drawings/${drawingId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.data.success) {
-        alert('그림이 삭제되었습니다.');
-        // 상세보기 모달 닫기
-        setSelectedDrawing(null);
-        // 목록 새로고침
-        fetchDrawings();
-      } else {
-        alert('그림 삭제에 실패했습니다.');
+          if (response.data.success) {
+            setModal({ 
+              show: true, 
+              message: '그림이 삭제되었습니다.', 
+              type: 'success' 
+            });
+            // 상세보기 모달 닫기
+            setSelectedDrawing(null);
+            // 목록 새로고침
+            fetchDrawings();
+          } else {
+            setModal({ 
+              show: true, 
+              message: '그림 삭제에 실패했습니다.', 
+              type: 'error' 
+            });
+          }
+        } catch (error) {
+          console.error('그림 삭제 오류:', error);
+          if (error.response?.status === 401) {
+            setModal({ 
+              show: true, 
+              message: '로그인이 만료되었습니다. 다시 로그인해주세요.', 
+              type: 'warning' 
+            });
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('username');
+            setTimeout(() => navigate('/login'), 2000);
+          } else {
+            setModal({ 
+              show: true, 
+              message: '그림 삭제 중 오류가 발생했습니다.', 
+              type: 'error' 
+            });
+          }
+        }
       }
-    } catch (error) {
-      console.error('그림 삭제 오류:', error);
-      if (error.response?.status === 401) {
-        alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
-        navigate('/login');
-      } else {
-        alert('그림 삭제 중 오류가 발생했습니다.');
-      }
-    }
+    });
   };
 
   return (
-    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
+    <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col relative" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
+      {/* 모달 오버레이 */}
+      {modal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            margin: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 모달 아이콘 */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              {modal.type === 'success' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#d4edda',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#28a745' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'error' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#dc3545' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'warning' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#ffc107' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* 모달 메시지 */}
+            <p style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '25px',
+              lineHeight: '1.5'
+            }}>
+              {modal.message}
+            </p>
+            
+            {/* 버튼들 */}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              {modal.type === 'warning' ? (
+                <>
+                  <button
+                    onClick={closeModal}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.opacity = '0.9';
+                      e.target.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.opacity = '1';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (modal.onConfirm) {
+                        modal.onConfirm();
+                      }
+                      closeModal();
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.opacity = '0.9';
+                      e.target.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.opacity = '1';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    삭제
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={closeModal}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: modal.type === 'success' ? 'rgb(39, 192, 141)' : 
+                                   modal.type === 'error' ? '#dc3545' : '#ffc107',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.opacity = '0.9';
+                    e.target.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  확인
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
-        <button className="text-gray-600" onClick={() => navigate('/mypage')}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
+        <button className="text-gray-600" onClick={() => {
+          // 그리기 활동에서 온 경우 MainPage로 이동
+          if (localStorage.getItem('fromThemeDrawing') || localStorage.getItem('fromColorDrawing') || 
+              localStorage.getItem('fromHomeDrawing') || localStorage.getItem('fromTreeDrawing') || 
+              localStorage.getItem('fromPersonDrawing')) {
+            localStorage.removeItem('fromThemeDrawing');
+            localStorage.removeItem('fromColorDrawing');
+            localStorage.removeItem('fromHomeDrawing');
+            localStorage.removeItem('fromTreeDrawing');
+            localStorage.removeItem('fromPersonDrawing');
+            navigate('/mainpage');
+          } else {
+            // 일반적인 경우 마이페이지로 이동
+            navigate('/mypage');
+          }
+        }}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '24px', height: '24px' }} />
         </button>
-        <h1 className="text-xl font-bold">내 그림 갤러리</h1>
+        <h1 className="text-xl font-bold" style={{color: '#111827'}}>내 그림 갤러리</h1>
         <div className="w-6"></div>
       </header>
 
@@ -260,7 +460,8 @@ function MyGallery() {
             {drawings.map((drawing) => (
               <div 
                 key={drawing.id} 
-                className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow relative border-2 border-gray-400"
+                className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow relative border-2"
+                style={{backgroundColor: '#F9FAF9', borderColor: 'rgb(39, 192, 141)'}}
                 onClick={() => handleThumbnailClick(drawing)}
               >
                 <img 
@@ -270,7 +471,7 @@ function MyGallery() {
                 />
                 {/* 분석된 그림에만 "분석" 표시 */}
                 {drawing.analysis_result && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg">
+                  <div className="absolute top-2 right-2 text-white text-xs px-2 py-1 rounded-full font-medium shadow-lg" style={{backgroundColor: 'rgb(39, 192, 141)'}}>
                     분석
                   </div>
                 )}
@@ -284,37 +485,44 @@ function MyGallery() {
 
         {/* 상세보기 모달 */}
         {selectedDrawing && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">그림 상세보기</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="w-[29rem] h-[58rem] rounded-3xl flex flex-col shadow-2xl" style={{backgroundColor: 'rgb(206, 244, 231)'}}>
+              <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
+                <button className="text-gray-600" onClick={closeDetail}>
+                  <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '24px', height: '24px' }} />
+                </button>
+                <h1 className="text-xl font-bold" style={{color: '#111827'}}>
+                  {selectedDrawing.drawing_type === 'theme' ? '테마그리기' :
+                   selectedDrawing.drawing_type === 'colored' ? '색칠하기' :
+                   selectedDrawing.drawing_type === 'house' ? '집그리기' :
+                   selectedDrawing.drawing_type === 'tree' ? '나무그리기' :
+                   selectedDrawing.drawing_type === 'person' ? '사람그리기' :
+                   '그림 상세보기'}
+                </h1>
                 <div className="flex gap-2">
                   <button 
                     onClick={() => handleDeleteDrawing(selectedDrawing.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600 transition-colors"
+                    className="text-gray-400 transition-colors p-1 rounded-full hover:bg-opacity-20"
+                    style={{'&:hover': {color: '#dc3545', backgroundColor: '#f8d7da'}}}
+                    title="그림 삭제"
                   >
-                    삭제
-                  </button>
-                  <button 
-                    onClick={closeDetail}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
-              </div>
+              </header>
               
-              <img 
-                src={selectedDrawing.image} 
-                alt={`Drawing ${selectedDrawing.id}`} 
-                className="w-full h-auto rounded-lg mb-4"
-              />
-              
-              <div className="space-y-2 mb-4">
-                <p className="text-sm text-gray-600">저장일: {new Date(selectedDrawing.created_at).toLocaleString()}</p>
-              </div>
+              <main className="flex-grow p-6 overflow-y-auto scrollbar-hide">
+                <img 
+                  src={selectedDrawing.image} 
+                  alt={`Drawing ${selectedDrawing.id}`} 
+                  className="w-full h-auto rounded-lg mb-4"
+                />
+                
+                <div className="space-y-2 mb-4">
+                  <p className="text-sm text-gray-600">저장일: {new Date(selectedDrawing.created_at).toLocaleString()}</p>
+                </div>
 
               {/* 이어서 색칠하기 버튼 (테마/색칠하기 그림에만) */}
               {(selectedDrawing.drawing_type === 'theme' || selectedDrawing.drawing_type === 'colored') && (
@@ -340,7 +548,10 @@ function MyGallery() {
                         alert('원본 이미지를 자동으로 찾을 수 없습니다. 다시 시도해주세요.');
                       }
                     }}
-                    className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    className="w-full text-white px-4 py-2 rounded-lg transition-colors"
+                    style={{backgroundColor: 'rgb(39, 192, 141)'}}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#30E8AB'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
                   >
                     이어서 색칠하기
                   </button>
@@ -371,7 +582,10 @@ function MyGallery() {
                         navigate('/draw/home');
                       }
                     }}
-                    className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                    className="w-full text-white px-4 py-2 rounded-lg transition-colors"
+                    style={{backgroundColor: 'rgb(39, 192, 141)'}}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#30E8AB'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
                   >
                     이어서 그리기
                   </button>
@@ -386,19 +600,7 @@ function MyGallery() {
                       AI 심리 분석
                     </h3>
                     <div className="w-full min-h-[150px] border-2 border-gray-800 rounded-lg p-4 bg-gray-50 text-sm text-gray-700 whitespace-pre-wrap text-left overflow-auto leading-relaxed">
-                      {selectedDrawing.analysis_result.ai_analysis || 
-                       selectedDrawing.analysis_result.speech_analysis || 
-                       selectedDrawing.analysis_result.chatbot_analysis ||
-                       'AI가 따뜻한 심리 분석을 준비하고 있습니다...'}
-                      
-                      {/* 디버깅 정보 */}
-                      <div className="mt-4 p-2 bg-yellow-100 rounded text-xs">
-                        <p><strong>디버깅:</strong></p>
-                        <p>ai_analysis: {selectedDrawing.analysis_result.ai_analysis ? '있음' : '없음'}</p>
-                        <p>speech_analysis: {selectedDrawing.analysis_result.speech_analysis ? '있음' : '없음'}</p>
-                        <p>chatbot_analysis: {selectedDrawing.analysis_result.chatbot_analysis ? '있음' : '없음'}</p>
-                        <p>전체 필드: {Object.keys(selectedDrawing.analysis_result).join(', ')}</p>
-                      </div>
+                      AI가 따뜻한 심리 분석을 준비하고 있습니다...
                     </div>
                   </div>
 
@@ -407,7 +609,10 @@ function MyGallery() {
                     {/* 마음코디네이터 찾기 버튼 */}
                     <button
                       onClick={() => navigate('/coordinator', { state: { from: 'gallery-detail', drawingId: selectedDrawing.id } })}
-                      className="px-6 py-3 bg-green-500 text-white border-none rounded-full text-sm font-bold cursor-pointer shadow-md transition-all duration-200 hover:bg-green-600 hover:transform hover:-translate-y-0.5"
+                      className="px-6 py-3 text-white border-none rounded-full text-sm font-bold cursor-pointer shadow-md transition-all duration-200 hover:transform hover:-translate-y-0.5"
+                      style={{backgroundColor: 'rgb(39, 192, 141)'}}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(35, 173, 127)'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
                     >
                       마음코디네이터 찾기
                     </button>
@@ -415,7 +620,10 @@ function MyGallery() {
                     {/* 근처 상담센터 찾기 버튼 */}
                     <button
                       onClick={() => navigate('/counseling-center')}
-                      className="px-6 py-3 bg-green-500 text-white border-none rounded-full text-sm font-bold cursor-pointer shadow-md transition-all duration-200 hover:bg-green-600 hover:transform hover:-translate-y-0.5"
+                      className="px-6 py-3 text-white border-none rounded-full text-sm font-bold cursor-pointer shadow-md transition-all duration-200 hover:transform hover:-translate-y-0.5"
+                      style={{backgroundColor: 'rgb(39, 192, 141)'}}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(35, 173, 127)'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
                     >
                       근처 상담센터 찾기
                     </button>
@@ -506,7 +714,10 @@ function MyGallery() {
                             }));
                             navigate('/draw/analysis');
                           }}
-                          className="mt-4 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                          className="mt-4 text-white px-6 py-2 rounded-lg transition-colors"
+                          style={{backgroundColor: 'rgb(39, 192, 141)'}}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#30E8AB'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
                         >
                           분석하기
                         </button>
@@ -515,6 +726,7 @@ function MyGallery() {
                   </div>
                 )
               )}
+              </main>
             </div>
           </div>
         )}
@@ -543,6 +755,7 @@ function MyGallery() {
         .scrollbar-hide::-webkit-scrollbar-thumb:hover {
           background: rgba(0, 0, 0, 0.3);
         }
+
       `}</style>
     </div>
   );
