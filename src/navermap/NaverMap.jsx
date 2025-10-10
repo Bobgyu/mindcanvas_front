@@ -386,11 +386,6 @@ const NaverMap = ({ center = { lat: 37.5665, lng: 126.9780 }, selectedLocation =
         </div>
       )}
       
-      {mapLoaded && !mapError && (
-        <div className="absolute top-4 left-4 px-3 py-2 rounded text-sm" style={{ backgroundColor: '#CEF4E7', borderColor: 'rgb(39, 192, 141)', color: '#111827' }}>
-          ✅ 네이버 맵 로드 성공
-        </div>
-      )}
     </div>
   );
 };

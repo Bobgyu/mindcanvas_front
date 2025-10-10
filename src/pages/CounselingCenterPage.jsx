@@ -172,14 +172,7 @@ const CounselingCenterPage = () => {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div>
-          <h1 style={{ margin: '0 0 5px 0', color: '#111827', fontSize: '24px' }}>
-            근처 심리상담센터 찾기
-          </h1>
-          <p style={{ margin: '0', color: '#111827', fontSize: '14px' }}>
-            근처 심리상담센터를 검색하고 위치를 확인할 수 있습니다.
-          </p>
-        </div>
+        {/* 좌측: 뒤로가기 버튼 */}
         <button
           onClick={() => navigate(-1)}
           style={{
@@ -194,6 +187,30 @@ const CounselingCenterPage = () => {
           }}
         >
           <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '16px', height: '16px' }} />
+        </button>
+
+        {/* 중앙: 제목 */}
+        <div>
+          <h1 style={{ margin: '0', color: '#111827', fontSize: '18px' }}>
+            근처 심리상담센터 찾기
+          </h1>
+        </div>
+
+        {/* 우측: 홈 버튼 */}
+        <button
+          onClick={() => navigate('/mainpage')}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: 'rgb(39, 192, 141)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '25px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          <img src="/src/imgdata/icon/homeicon.png" alt="홈" style={{ width: '16px', height: '16px' }} />
         </button>
       </div>
 
