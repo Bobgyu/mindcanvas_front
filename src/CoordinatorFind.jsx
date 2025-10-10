@@ -10,6 +10,8 @@ function CoordinatorFind() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [assignedCoordinatorId, setAssignedCoordinatorId] = useState(null)
+  const [coordinators, setCoordinators] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const handleBack = () => {
     // location.state를 확인해서 정확한 페이지로 돌아가기
@@ -29,73 +31,150 @@ function CoordinatorFind() {
     navigate('/mainpage')
   }
 
-  // 사용자의 지정된 코디네이터 정보 가져오기
+  // 코디네이터 목록과 사용자의 지정된 코디네이터 정보 가져오기
   useEffect(() => {
-    const fetchAssignedCoordinator = async () => {
+    const fetchData = async () => {
       try {
-        const token = localStorage.getItem('authToken')
-        if (!token) return
-
-        const response = await axios.get('http://localhost:5000/api/user/coordinator', {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        setLoading(true)
+        
+        // 코디네이터 목록 가져오기
+        const coordinatorsResponse = await axios.get('http://localhost:5000/api/coordinators')
+        if (coordinatorsResponse.data.success) {
+          // API 데이터를 하드코딩된 형식으로 변환
+          const apiCoordinators = coordinatorsResponse.data.coordinators.map(coordinator => ({
+            id: coordinator.id + 100, // ID 충돌 방지를 위해 100을 더함
+            name: coordinator.name,
+            age: "65세", // 기본값 설정
+            region: "인천", // 기본값 설정
+            experience: "8년", // 기본값 설정
+            institution: "심리상담센터", // 기본값 설정
+            profile: coordinator.profile
+          }))
+          
+          // 하드코딩된 데이터와 API 데이터 결합
+          const hardcodedCoordinators = [
+            {
+              id: 1,
+              name: "김철호",
+              age: "70세",
+              region: "서울",
+              experience: "8년",
+              institution: "마음치료센터",
+              profile: "/src/imgdata/icon/마음코디네이터1.png"
+            },
+            {
+              id: 2,
+              name: "이말숙",
+              age: "69세", 
+              region: "부산",
+              experience: "5년",
+              institution: "정신건강원",
+              profile: "/src/imgdata/icon/마음코디네이터2.png"
+            },
+            {
+              id: 3,
+              name: "박수미",
+              age: "63세",
+              region: "대구", 
+              experience: "10년",
+              institution: "심리상담센터",
+              profile: "/src/imgdata/icon/마음코디네이터3.png"
+            }
+          ]
+          
+          // API에서 가져온 "최준식" 데이터가 있으면 하드코딩된 "최준식" 대신 사용
+          const choiCoordinator = apiCoordinators.find(coord => coord.name === "최준식")
+          if (choiCoordinator) {
+            // 하드코딩된 "최준식"을 API 데이터로 교체
+            hardcodedCoordinators.push(choiCoordinator)
+          } else {
+            // API에 "최준식"이 없으면 하드코딩된 데이터 사용
+            hardcodedCoordinators.push({
+              id: 4,
+              name: "최준식",
+              age: "65세",
+              region: "인천", 
+              experience: "8년",
+              institution: "심리상담센터",
+              profile: "/src/imgdata/icon/마음코디네이터4.png"
+            })
           }
-        })
+          
+          setCoordinators(hardcodedCoordinators)
+        }
 
-        if (response.data.success && response.data.coordinator) {
-          setAssignedCoordinatorId(response.data.coordinator.id)
+        // 사용자의 지정된 코디네이터 정보 가져오기
+        const token = localStorage.getItem('authToken')
+        if (token) {
+          const coordinatorResponse = await axios.get('http://localhost:5000/api/user/coordinator', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+
+          if (coordinatorResponse.data.success && coordinatorResponse.data.coordinator) {
+            setAssignedCoordinatorId(coordinatorResponse.data.coordinator.id)
+          }
         }
       } catch (error) {
-        console.error('지정된 코디네이터 정보 조회 실패:', error)
+        console.error('데이터 조회 실패:', error)
+        // 에러 시 하드코딩된 데이터 사용
+        setCoordinators([
+          {
+            id: 1,
+            name: "김철호",
+            age: "70세",
+            region: "서울",
+            experience: "8년",
+            institution: "마음치료센터",
+            profile: "/src/imgdata/icon/마음코디네이터1.png"
+          },
+          {
+            id: 2,
+            name: "이말숙",
+            age: "69세", 
+            region: "부산",
+            experience: "5년",
+            institution: "정신건강원",
+            profile: "/src/imgdata/icon/마음코디네이터2.png"
+          },
+          {
+            id: 3,
+            name: "박수미",
+            age: "63세",
+            region: "대구", 
+            experience: "10년",
+            institution: "심리상담센터",
+            profile: "/src/imgdata/icon/마음코디네이터3.png"
+          },
+          {
+            id: 4,
+            name: "최준식",
+            age: "65세",
+            region: "인천", 
+            experience: "8년",
+            institution: "심리상담센터",
+            profile: "/src/imgdata/icon/마음코디네이터4.png"
+          }
+        ])
+      } finally {
+        setLoading(false)
       }
     }
 
-    fetchAssignedCoordinator()
+    fetchData()
   }, [])
 
-  // 마음코디네이터 데이터 (실제로는 API에서 가져올 데이터)
-  const coordinators = [
-    {
-      id: 1,
-      name: "김철호",
-      age: "70세",
-      region: "서울",
-      experience: "8년",
-      institution: "마음치료센터",
-      profile: "/src/imgdata/icon/마음코디네이터1.png"
-    },
-    {
-      id: 2,
-      name: "이말숙",
-      age: "69세", 
-      region: "부산",
-      experience: "5년",
-      institution: "정신건강원",
-      profile: "/src/imgdata/icon/마음코디네이터2.png"
-    },
-    {
-      id: 3,
-      name: "박수미",
-      age: "63세",
-      region: "대구", 
-      experience: "10년",
-      institution: "심리상담센터",
-      profile: "/src/imgdata/icon/마음코디네이터3.png"
-    },
-    {
-      id: 4,
-      name: "최준식",
-      age: "65세",
-      region: "인천", 
-      experience: "8년",
-      institution: "심리상담센터",
-      profile: "/src/imgdata/icon/마음코디네이터4.png"
-    }
-  ]
 
   const handleChat = () => {
     if (selectedCoordinator) {
-      navigate('/chat', { state: { coordinator: selectedCoordinator, fromMyPage: true } })
+      // API에서 가져온 코디네이터인 경우 원래 ID로 복원
+      const coordinatorWithProfile = {
+        ...selectedCoordinator,
+        id: selectedCoordinator.id > 100 ? selectedCoordinator.id - 100 : selectedCoordinator.id, // API ID 복원
+        profile: selectedCoordinator.profile
+      }
+      navigate('/chat', { state: { coordinator: coordinatorWithProfile, fromMyPage: true } })
     } else {
       setModal({ 
         show: true, 
@@ -201,10 +280,20 @@ function CoordinatorFind() {
       {/* 메인 콘텐츠 */}
       <main className="flex-grow p-6 overflow-y-auto">
         <div className="space-y-4">
-          {filteredCoordinators.length === 0 && showFavoritesOnly ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+              <p className="text-gray-500 mt-4">코디네이터 목록을 불러오는 중...</p>
+            </div>
+          ) : filteredCoordinators.length === 0 && showFavoritesOnly ? (
             <div className="text-center py-8">
               <p className="text-gray-500">즐겨찾기된 코디네이터가 없습니다.</p>
               <p className="text-sm text-gray-400 mt-2">하트 버튼을 눌러 코디네이터를 즐겨찾기에 추가해보세요.</p>
+            </div>
+          ) : filteredCoordinators.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">등록된 코디네이터가 없습니다.</p>
+              <p className="text-sm text-gray-400 mt-2">코디네이터가 등록되면 여기에 표시됩니다.</p>
             </div>
           ) : (
             filteredCoordinators.map((coordinator) => (

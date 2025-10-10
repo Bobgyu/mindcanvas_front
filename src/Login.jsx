@@ -112,10 +112,19 @@ function Login() {
     navigate('/join');
   };
 
+  const handleBack = () => {
+    navigate('/');
+  };
+
+
   return (
     <div className="w-[29rem] h-[58rem] rounded-3xl bg-white flex flex-col">
-      <header className="w-full shadow-sm py-4 px-6 flex items-center justify-center">
+      <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
+        <button className="text-gray-600 hover:text-gray-800 transition-colors" onClick={handleBack}>
+          <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '24px', height: '24px' }} />
+        </button>
         <h1 className="text-xl font-bold">로그인</h1>
+        <div className="w-6"></div>
       </header>
 
       <main className="flex-grow p-6">

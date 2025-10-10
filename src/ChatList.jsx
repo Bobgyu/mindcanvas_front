@@ -36,6 +36,7 @@ function ChatList() {
           coordinator_id: room.coordinator_id,
           coordinator_name: room.coordinator_name,
           coordinator_institution: "상담센터", // 기본값 설정
+          coordinator_profile: room.coordinator_profile || '/src/imgdata/icon/user.png', // 프로필 이미지 추가
           last_message: room.last_message,
           last_message_time: room.last_message_time,
           unread_count: room.unread_count
@@ -77,7 +78,8 @@ function ChatList() {
     const coordinator = {
       id: chatRoom.coordinator_id,
       name: chatRoom.coordinator_name,
-      institution: chatRoom.coordinator_institution
+      institution: chatRoom.coordinator_institution,
+      profile: chatRoom.coordinator_profile
     }
     navigate('/chat', { state: { coordinator, fromMainPage: location.state?.fromMainPage, fromMyPage: location.state?.fromMyPage, fromMyPageChat: location.state?.fromMyPageChat } })
   }
@@ -377,17 +379,37 @@ function ChatList() {
               >
                 <div className="flex items-center space-x-4">
                   {/* 프로필 이미지 */}
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 border-2" style={{backgroundColor: '#CEF4E7', borderColor: 'rgb(39, 192, 141)'}}>
-                    <span className="text-lg font-semibold" style={{color: 'rgb(39, 192, 141)'}}>
-                      {chatRoom.coordinator_name.charAt(0)}
-                    </span>
+                  <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2" style={{borderColor: 'rgb(39, 192, 141)'}}>
+                    {chatRoom.coordinator_profile ? (
+                      <img 
+                        src={chatRoom.coordinator_profile} 
+                        alt={`${chatRoom.coordinator_name} 프로필`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // 이미지 로드 실패 시 기본 아이콘으로 대체
+                          e.target.style.display = 'none'
+                          e.target.nextSibling.style.display = 'flex'
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="w-full h-full flex items-center justify-center" 
+                      style={{
+                        backgroundColor: '#CEF4E7', 
+                        display: chatRoom.coordinator_profile ? 'none' : 'flex'
+                      }}
+                    >
+                      <span className="text-lg font-semibold" style={{color: 'rgb(39, 192, 141)'}}>
+                        {(chatRoom.coordinator_name || 'C').charAt(0)}
+                      </span>
+                    </div>
                   </div>
                   
                   {/* 채팅방 정보 */}
                   <div className="flex-grow min-w-0">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold truncate" style={{color: '#111827'}}>
-                        {chatRoom.coordinator_name} 코디네이터
+                        {chatRoom.coordinator_name || '코디네이터'}님
                       </h3>
                       <div className="flex items-center space-x-2">
                         <button

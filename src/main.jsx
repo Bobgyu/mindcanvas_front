@@ -12,6 +12,9 @@ import Coordinator from './Coordinator.jsx'
 import CoordinatorFind from './CoordinatorFind.jsx'
 import Chat from './Chat.jsx'
 import ChatList from './ChatList.jsx'
+import CoordinatorLogin from './CoordinatorLogin.jsx'
+import CoordinatorDashboard from './CoordinatorDashboard.jsx'
+import CoordinatorChat from './CoordinatorChat.jsx'
 import Home from './draw/home.jsx'
 import Analysis from './draw/analysis.jsx'
 import Tree from './draw/tree.jsx'
@@ -39,6 +42,9 @@ createRoot(document.getElementById('root')).render(
         <Route path="/coordinator" element={<CoordinatorFind />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/chat-list" element={<ChatList />} />
+        <Route path="/coordinator-login" element={<CoordinatorLogin />} />
+        <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
+        <Route path="/coordinator-chat" element={<CoordinatorChat />} />
         <Route path="/draw/home" element={<Home />} />
         <Route path="/draw/analysis" element={<Analysis />} />
         <Route path="/draw/tree" element={<Tree />} />

@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
+import io from 'socket.io-client'
 
 function Chat() {
   const navigate = useNavigate()
   const location = useLocation()
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
+  const [socket, setSocket] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
   const messagesEndRef = useRef(null)
   
   const coordinator = location.state?.coordinator
@@ -15,6 +18,9 @@ function Chat() {
   const fromMyPageChat = location.state?.fromMyPageChat
   const fromCoordinator = location.state?.fromCoordinator
 
+  // 디버깅 로그 추가
+  console.log('Chat.jsx - coordinator 정보:', coordinator)
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -22,6 +28,54 @@ function Chat() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // WebSocket 연결
+  useEffect(() => {
+    if (!coordinator) return;
+
+    const newSocket = io('http://localhost:5000', {
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true
+    });
+    setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      console.log('WebSocket 연결됨');
+      setIsConnected(true);
+      
+      // 채팅방 입장
+      const userId = localStorage.getItem('userId');
+      newSocket.emit('join_chat', {
+        user_id: userId,
+        coordinator_id: coordinator.id,
+        user_type: 'user'
+      });
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('WebSocket 연결 끊김');
+      setIsConnected(false);
+    });
+
+    newSocket.on('new_message', (data) => {
+      const newMessage = {
+        id: data.id,
+        text: data.message,
+        sender: data.sender,
+        timestamp: new Date(data.timestamp).toLocaleTimeString()
+      };
+      setMessages(prev => [...prev, newMessage]);
+    });
+
+    newSocket.on('error', (data) => {
+      console.error('WebSocket 오류:', data.message);
+    });
+
+    return () => {
+      newSocket.close();
+    };
+  }, [coordinator]);
 
   // 채팅 히스토리 로드
   useEffect(() => {
@@ -34,7 +88,8 @@ function Chat() {
   const loadChatHistory = async () => {
     try {
       const token = localStorage.getItem('authToken')
-      const response = await axios.get(`http://localhost:5000/api/chat/history?coordinator_id=${coordinator.id}`, {
+      const userId = localStorage.getItem('userId')
+      const response = await axios.get(`http://localhost:5000/api/chat/history?coordinator_id=${coordinator.id}&user_id=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -82,75 +137,19 @@ function Chat() {
   }
 
   const sendMessage = async () => {
-    if (inputMessage.trim()) {
-      const userMessage = {
-        id: Date.now(),
-        text: inputMessage.trim(),
-        sender: 'user',
-        timestamp: new Date().toLocaleTimeString()
-      }
-      
-      setMessages(prev => [...prev, userMessage])
-      const messageText = inputMessage.trim()
-      setInputMessage('')
-      
-      // 사용자 메시지를 DB에 저장
-      try {
-        const token = localStorage.getItem('authToken')
-        await axios.post('http://localhost:5000/api/chat/send', {
-          coordinator_id: coordinator.id,
-          coordinator_name: coordinator.name,
-          message: messageText,
-          sender: 'user'
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      } catch (error) {
-        console.error('메시지 저장 실패:', error)
-      }
-      
-      // AI 응답 시뮬레이션
-      setTimeout(async () => {
-        const responses = [
-          "안녕하세요! 어떤 도움이 필요하신가요?",
-          "그런 마음이 드시는군요. 더 자세히 말씀해 주실 수 있나요?",
-          "충분히 이해합니다. 함께 해결해보아요.",
-          "좋은 질문이네요. 제 경험상 이런 방법이 도움이 될 것 같습니다.",
-          "괜찮습니다. 천천히 말씀해 주세요."
-        ]
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-        
-        const aiMessage = {
-          id: Date.now() + 1,
-          text: randomResponse,
-          sender: 'coordinator',
-          timestamp: new Date().toLocaleTimeString()
-        }
-        
-        setMessages(prev => [...prev, aiMessage])
-        
-        // AI 응답도 DB에 저장
-        try {
-          const token = localStorage.getItem('authToken')
-          await axios.post('http://localhost:5000/api/chat/send', {
-            coordinator_id: coordinator.id,
-            coordinator_name: coordinator.name,
-            message: randomResponse,
-            sender: 'coordinator'
-          }, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-        } catch (error) {
-          console.error('AI 응답 저장 실패:', error)
-        }
-      }, 1000)
+    if (inputMessage.trim() && socket && isConnected) {
+      const messageText = inputMessage.trim();
+      setInputMessage('');
+
+      // WebSocket으로 메시지 전송
+      const userId = localStorage.getItem('userId');
+      socket.emit('send_message', {
+        user_id: userId,
+        coordinator_id: coordinator.id,
+        coordinator_name: coordinator.name || coordinator.username || '코디네이터',
+        message: messageText,
+        sender: 'user'
+      });
     }
   }
 
@@ -192,8 +191,13 @@ function Chat() {
           </svg>
         </button>
         <div className="text-center">
-          <h1 className="text-lg font-bold text-gray-800">{coordinator.name} 코디네이터</h1>
-          <p className="text-sm" style={{ color: '#27C08D' }}>온라인</p>
+          <h1 className="text-lg font-bold text-gray-800">{coordinator?.name || coordinator?.username || '코디네이터'}님</h1>
+          <div className="flex items-center justify-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <p className="text-sm" style={{ color: isConnected ? '#27C08D' : '#EF4444' }}>
+              {isConnected ? '연결됨' : '연결 끊김'}
+            </p>
+          </div>
         </div>
         <button className="text-gray-600">
           <svg
@@ -223,7 +227,7 @@ function Chat() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-gray-600">
                 <p className="text-lg font-medium mb-2">안녕하세요!</p>
-                <p className="text-base">{coordinator.name} 코디네이터입니다.</p>
+                <p className="text-base">{coordinator?.name || coordinator?.username || '코디네이터'}님입니다.</p>
                 <p className="text-sm mt-2">무엇이든 편하게 말씀해 주세요.</p>
               </div>
             </div>
@@ -238,11 +242,29 @@ function Chat() {
                 >
               {message.sender === 'coordinator' && (
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                  <img 
-                    src={coordinator.profile} 
-                    alt="코디네이터 프로필" 
-                    className="w-full h-full object-cover"
-                  />
+                  {coordinator.profile ? (
+                    <img 
+                      src={coordinator.profile} 
+                      alt="코디네이터 프로필" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 기본 아이콘으로 대체
+                        e.target.style.display = 'none'
+                        e.target.nextSibling.style.display = 'flex'
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-full h-full flex items-center justify-center" 
+                    style={{
+                      backgroundColor: '#CEF4E7', 
+                      display: coordinator.profile ? 'none' : 'flex'
+                    }}
+                  >
+                    <span className="text-xs font-semibold" style={{color: 'rgb(39, 192, 141)'}}>
+                      {(coordinator?.name || coordinator?.username || 'C').charAt(0)}
+                    </span>
+                  </div>
                 </div>
               )}
               
@@ -294,11 +316,11 @@ function Chat() {
           />
           <button
             onClick={sendMessage}
-            disabled={!inputMessage.trim()}
+            disabled={!inputMessage.trim() || !isConnected}
             className="p-3 rounded-full transition-colors"
             style={{ 
-              backgroundColor: inputMessage.trim() ? '#27C08D' : '#E5E5E5',
-              color: inputMessage.trim() ? 'white' : '#9CA3AF'
+              backgroundColor: (inputMessage.trim() && isConnected) ? '#27C08D' : '#E5E5E5',
+              color: (inputMessage.trim() && isConnected) ? 'white' : '#9CA3AF'
             }}
           >
             <svg

@@ -33,56 +33,14 @@ function Coordinator() {
         })
 
         if (response.data.success && response.data.coordinator) {
-          // API에서 받은 코디네이터 정보를 CoordinatorFind.jsx의 데이터와 매칭
+          // API에서 받은 코디네이터 정보를 그대로 사용
           const coordinatorData = response.data.coordinator
           
-          // CoordinatorFind.jsx의 코디네이터 데이터와 매칭하여 완전한 정보 구성
-          const coordinators = [
-            {
-              id: 1,
-              name: "김철호",
-              age: "70세",
-              region: "서울",
-              experience: "8년",
-              institution: "마음치료센터",
-              profile: "/src/imgdata/icon/마음코디네이터1.png"
-            },
-            {
-              id: 2,
-              name: "이말숙",
-              age: "69세", 
-              region: "부산",
-              experience: "5년",
-              institution: "정신건강원",
-              profile: "/src/imgdata/icon/마음코디네이터2.png"
-            },
-            {
-              id: 3,
-              name: "박수미",
-              age: "63세",
-              region: "대구", 
-              experience: "10년",
-              institution: "심리상담센터",
-              profile: "/src/imgdata/icon/마음코디네이터3.png"
-            },
-            {
-              id: 4,
-              name: "최준식",
-              age: "65세",
-              region: "인천", 
-              experience: "8년",
-              institution: "심리상담센터",
-              profile: "/src/imgdata/icon/마음코디네이터4.png"
-            }
-          ]
+          // 디버깅 로그 추가
+          console.log('Coordinator.jsx - API에서 받은 코디네이터 데이터:', coordinatorData)
           
-          // API에서 받은 코디네이터 ID로 매칭하여 완전한 정보 찾기
-          const matchedCoordinator = coordinators.find(c => c.id === coordinatorData.id)
-          if (matchedCoordinator) {
-            setCoordinator(matchedCoordinator)
-          } else {
-            setCoordinator(coordinatorData)
-          }
+          // DB에서 가져온 코디네이터 정보를 그대로 설정
+          setCoordinator(coordinatorData)
         } else {
           setCoordinator(null)
         }
