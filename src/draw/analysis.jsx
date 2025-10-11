@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 
 function Analysis() {
   const navigate = useNavigate()
-  const [speechAnalysis, setSpeechAnalysis] = useState('')
+  const [speechAnalysis, setSpeechAnalysis] = useState('AI가 따뜻한 심리 분석을 준비하고 있습니다...')
   const [analysisData, setAnalysisData] = useState(null)
   const [drawnImage, setDrawnImage] = useState(null)
   const [analyzedImage, setAnalyzedImage] = useState(null)
@@ -42,24 +42,40 @@ function Analysis() {
 
   // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
   const updateGalleryDrawing = async (analysisResult) => {
-    if (!isFromGallery || !galleryDrawingId) return
+    if (!isFromGallery || !galleryDrawingId) {
+      console.log('갤러리 업데이트 조건 불만족:', { isFromGallery, galleryDrawingId });
+      return;
+    }
 
     try {
+      console.log('갤러리 그림 업데이트 시작:', {
+        galleryDrawingId,
+        analysisResult,
+        hasAiAnalysis: !!analysisResult.ai_analysis
+      });
+
       const token = localStorage.getItem('authToken')
+      const requestBody = {
+        image: drawnImage,
+        analysis_result: analysisResult
+      };
+      
+      console.log('PUT 요청 본문:', requestBody);
+      
       const response = await fetch(`http://localhost:5000/api/drawings/${galleryDrawingId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          image: drawnImage,
-          analysis_result: analysisResult
-        })
+        body: JSON.stringify(requestBody)
       })
 
+      console.log('PUT 응답 상태:', response.status, response.statusText);
+
       if (response.ok) {
-        console.log('갤러리 그림 분석 결과 업데이트 완료')
+        const responseData = await response.json();
+        console.log('갤러리 그림 분석 결과 업데이트 완료:', responseData);
         // 성공 알림
         setModal({ 
           show: true, 
@@ -69,7 +85,8 @@ function Analysis() {
         // 로컬 스토리지에 분석 완료 플래그 저장 (갤러리 자동 이동 방지)
         localStorage.setItem('analysisCompleted', 'true')
       } else {
-        console.error('갤러리 그림 업데이트 실패')
+        const errorText = await response.text();
+        console.error('갤러리 그림 업데이트 실패:', response.status, response.statusText, errorText);
         setModal({ 
           show: true, 
           message: '분석 결과 저장에 실패했습니다.', 
@@ -114,6 +131,12 @@ function Analysis() {
   }
 
   const getChatbotAnalysis = async (analysisData) => {
+    // 이미 로딩 중이면 중복 호출 방지
+    if (isLoadingSpeech) {
+      console.log('이미 챗봇 분석이 진행 중입니다.');
+      return;
+    }
+    
     try {
       setIsLoadingSpeech(true)
       const response = await fetch('http://localhost:5000/api/chatbot', {
@@ -134,19 +157,35 @@ function Analysis() {
           setSpeechAnalysis(data.response)
           // 갤러리에서 온 경우 AI 분석 내용을 포함하여 업데이트
           if (isFromGallery && galleryDrawingId) {
+            console.log('갤러리에서 온 경우 - AI 분석 텍스트 저장 시작');
             // 로컬 스토리지에서 분석 결과를 다시 가져와서 AI 분석 내용과 합치기
             const savedAnalysis = localStorage.getItem('analysisResult')
             if (savedAnalysis) {
               try {
                 const parsedAnalysis = JSON.parse(savedAnalysis)
-                const analysisWithSpeech = {
-                  ...parsedAnalysis,
-                  ai_analysis: data.response
+                console.log('기존 분석 결과:', parsedAnalysis);
+                
+                // 분석 결과가 배열인 경우 딕셔너리로 변환
+                let analysisWithSpeech;
+                if (Array.isArray(parsedAnalysis)) {
+                  analysisWithSpeech = {
+                    detected_elements: parsedAnalysis,
+                    ai_analysis: data.response
+                  }
+                } else {
+                  analysisWithSpeech = {
+                    ...parsedAnalysis,
+                    ai_analysis: data.response
+                  }
                 }
+                
+                console.log('AI 분석 텍스트 추가된 분석 결과:', analysisWithSpeech);
                 updateGalleryDrawing(analysisWithSpeech)
               } catch (error) {
                 console.error('분석 결과 파싱 오류:', error)
               }
+            } else {
+              console.error('저장된 분석 결과가 없습니다');
             }
           }
           
@@ -215,23 +254,47 @@ function Analysis() {
         const parsedAnalysis = JSON.parse(savedAnalysis)
         setAnalysisData(parsedAnalysis)
         
-        // 분석된 그림 생성 (탐지된 요소들을 표시한 그림)
-        if (parsedAnalysis.detected_elements && parsedAnalysis.detected_elements.length > 0) {
-          createAnalyzedImage(savedDrawnImage, parsedAnalysis.detected_elements)
-        }
-        
-        // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
+        // 갤러리에서 온 경우 저장된 분석 결과를 그대로 표시
         if (isFromGallery) {
-          // AI 심리 분석 내용을 포함하여 업데이트
-          const analysisWithSpeech = {
-            ...parsedAnalysis,
-            ai_analysis: speechAnalysis || 'AI가 따뜻한 심리 분석을 준비하고 있습니다...'
+          console.log('갤러리에서 온 경우 - 분석결과:', parsedAnalysis);
+          console.log('AI 분석 텍스트:', parsedAnalysis.ai_analysis);
+          console.log('Speech 분석 텍스트:', parsedAnalysis.speech_analysis);
+          
+          // 저장된 AI 분석 결과가 있으면 바로 표시
+          if (parsedAnalysis.ai_analysis) {
+            console.log('AI 분석 텍스트 표시');
+            setSpeechAnalysis(parsedAnalysis.ai_analysis)
+          } else if (parsedAnalysis.speech_analysis) {
+            console.log('Speech 분석 텍스트 표시');
+            setSpeechAnalysis(parsedAnalysis.speech_analysis)
+          } else {
+            console.log('AI 분석 텍스트가 없어서 재분석 진행');
+            // AI 분석 텍스트가 없으면 재분석 (로딩 메시지는 이미 초기값으로 설정됨)
+            getChatbotAnalysis(parsedAnalysis)
           }
-          updateGalleryDrawing(analysisWithSpeech)
+        } else {
+          console.log('일반 그리기에서 온 경우 - 챗봇 분석 요청');
+          // 일반 그리기에서 온 경우에만 챗봇 분석 요청
+          getChatbotAnalysis(parsedAnalysis)
         }
         
-        // 챗봇 분석 요청 (파싱된 기본 분석 결과는 표시하지 않음)
-        getChatbotAnalysis(parsedAnalysis)
+        // 분석된 그림 생성 (탐지된 요소들을 표시한 그림) - AI 분석 텍스트 표시 후에 실행
+        let detectedElements = null;
+        
+        if (Array.isArray(parsedAnalysis)) {
+          // 갤러리에서 온 경우: 배열 형태의 분석 결과
+          detectedElements = parsedAnalysis;
+        } else if (parsedAnalysis.detected_elements) {
+          // 일반 그리기에서 온 경우: 딕셔너리 형태의 분석 결과
+          detectedElements = parsedAnalysis.detected_elements;
+        }
+        
+        if (detectedElements && detectedElements.length > 0) {
+          console.log('분석된 그림 생성:', detectedElements);
+          createAnalyzedImage(savedDrawnImage, detectedElements)
+        } else {
+          console.log('분석된 요소가 없어서 분석된 그림을 생성하지 않습니다.');
+        }
       } catch (error) {
         console.error('분석 결과 파싱 오류:', error)
         console.error('분석 결과를 불러오는 중 오류가 발생했습니다.')

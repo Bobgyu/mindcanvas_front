@@ -594,14 +594,32 @@ function MyGallery() {
 
               {selectedDrawing.analysis_result ? (
                 <div className="border-t pt-4">
-                  {/* AI 심리 분석 영역 - analysis.jsx와 동일한 디자인 */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
-                      AI 심리 분석
-                    </h3>
-                    <div className="w-full min-h-[150px] border-2 border-gray-800 rounded-lg p-4 bg-gray-50 text-sm text-gray-700 whitespace-pre-wrap text-left overflow-auto leading-relaxed">
-                      AI가 따뜻한 심리 분석을 준비하고 있습니다...
-                    </div>
+
+                  {/* 분석하기 버튼 */}
+                  <div className="flex justify-center mb-4">
+                    <button
+                      onClick={() => {
+                        console.log('분석하기 버튼 클릭 - 분석결과:', selectedDrawing.analysis_result);
+                        
+                        // 갤러리에서 온 경우임을 표시하고 분석 페이지로 이동
+                        localStorage.setItem('drawnImage', selectedDrawing.image);
+                        localStorage.setItem('analysisResult', JSON.stringify(selectedDrawing.analysis_result));
+                        localStorage.setItem('continueDrawing', JSON.stringify({
+                          id: selectedDrawing.id,
+                          image: selectedDrawing.image,
+                          drawingType: selectedDrawing.drawing_type || 'normal',
+                          fromGallery: true,
+                          hasAiAnalysis: !!(selectedDrawing.analysis_result?.ai_analysis || selectedDrawing.analysis_result?.speech_analysis)
+                        }));
+                        navigate('/draw/analysis');
+                      }}
+                      className="px-8 py-3 text-white border-none rounded-full text-base font-bold cursor-pointer shadow-md transition-all duration-200 hover:transform hover:-translate-y-0.5"
+                      style={{backgroundColor: 'rgb(39, 192, 141)'}}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(35, 173, 127)'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(39, 192, 141)'}
+                    >
+                      분석하기
+                    </button>
                   </div>
 
                   {/* 하단 버튼 영역 - analysis.jsx와 동일한 디자인 */}
@@ -704,13 +722,17 @@ function MyGallery() {
                         <p className="text-gray-400 text-sm mt-1">분석을 원하시면 아래 버튼을 눌러주세요</p>
                         <button
                           onClick={() => {
+                            console.log('분석하기 버튼 클릭 - 분석결과:', selectedDrawing.analysis_result);
+                            
                             // 갤러리에서 온 경우임을 표시하고 분석 페이지로 이동
                             localStorage.setItem('drawnImage', selectedDrawing.image);
+                            localStorage.setItem('analysisResult', JSON.stringify(selectedDrawing.analysis_result));
                             localStorage.setItem('continueDrawing', JSON.stringify({
                               id: selectedDrawing.id,
                               image: selectedDrawing.image,
                               drawingType: selectedDrawing.drawing_type || 'normal',
-                              fromGallery: true
+                              fromGallery: true,
+                              hasAiAnalysis: !!(selectedDrawing.analysis_result?.ai_analysis || selectedDrawing.analysis_result?.speech_analysis)
                             }));
                             navigate('/draw/analysis');
                           }}

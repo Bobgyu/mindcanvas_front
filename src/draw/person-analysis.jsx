@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react'
 
 function PersonAnalysis() {
   const navigate = useNavigate()
-  const [speechAnalysis, setSpeechAnalysis] = useState('')
+  const [speechAnalysis, setSpeechAnalysis] = useState('AI가 따뜻한 심리 분석을 준비하고 있습니다...')
   const [drawnImage, setDrawnImage] = useState(null)
   const [analyzedImage, setAnalyzedImage] = useState(null)
   const [selectedGender, setSelectedGender] = useState(null)
   const [isLoadingSpeech, setIsLoadingSpeech] = useState(false)
   const [savedDrawingId, setSavedDrawingId] = useState(null)
+  const [isFromGallery, setIsFromGallery] = useState(false)
 
   const handleBack = () => {
     // 로컬 스토리지 정리
@@ -55,6 +56,12 @@ function PersonAnalysis() {
   }
 
   const getChatbotAnalysis = async (analysisData) => {
+    // 이미 로딩 중이면 중복 호출 방지
+    if (isLoadingSpeech) {
+      console.log('이미 챗봇 분석이 진행 중입니다.');
+      return;
+    }
+    
     try {
       setIsLoadingSpeech(true)
       const response = await fetch('http://localhost:5000/api/chatbot', {
@@ -104,6 +111,19 @@ function PersonAnalysis() {
   }
 
   useEffect(() => {
+    // 갤러리에서 온 경우 확인
+    const continueDrawing = localStorage.getItem('continueDrawing')
+    if (continueDrawing) {
+      try {
+        const drawingData = JSON.parse(continueDrawing)
+        if (drawingData.fromGallery) {
+          setIsFromGallery(true)
+        }
+      } catch (error) {
+        console.error('continueDrawing 파싱 오류:', error)
+      }
+    }
+    
     // 저장된 그림 ID 가져오기
     const savedDrawingId = localStorage.getItem('savedDrawingId')
     if (savedDrawingId) {
@@ -132,8 +152,22 @@ function PersonAnalysis() {
           createAnalyzedImage(savedDrawnImage, parsedAnalysis)
         }
         
-        // 챗봇 분석 요청 (파싱된 기본 분석 결과는 표시하지 않음)
-        getChatbotAnalysis(parsedAnalysis)
+        // 갤러리에서 온 경우 저장된 분석 결과를 그대로 표시
+        if (isFromGallery) {
+          // 저장된 AI 분석 결과가 있으면 바로 표시
+          if (parsedAnalysis.ai_analysis) {
+            setSpeechAnalysis(parsedAnalysis.ai_analysis)
+          } else if (parsedAnalysis.speech_analysis) {
+            setSpeechAnalysis(parsedAnalysis.speech_analysis)
+          } else {
+            // AI 분석 텍스트가 없으면 재분석
+            setSpeechAnalysis('AI가 따뜻한 심리 분석을 준비하고 있습니다...')
+            getChatbotAnalysis(parsedAnalysis)
+          }
+        } else {
+          // 일반 그리기에서 온 경우에만 챗봇 분석 요청
+          getChatbotAnalysis(parsedAnalysis)
+        }
       } catch (error) {
         console.error('분석 결과 파싱 오류:', error)
         console.error('분석 결과를 불러오는 중 오류가 발생했습니다.')
