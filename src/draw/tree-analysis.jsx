@@ -125,110 +125,7 @@ function TreeAnalysis() {
           createAnalyzedImage(savedDrawnImage, parsedAnalysis)
         }
         
-        // 분석 결과를 텍스트로 변환
-        let resultText = ''
-        
-        // 탐지된 요소들 표시
-        if (parsedAnalysis && parsedAnalysis.length > 0) {
-          resultText += '🌳 탐지된 나무 요소들:\n'
-          parsedAnalysis.forEach((element, index) => {
-            resultText += `• ${element.class} (신뢰도: ${(element.confidence * 100).toFixed(1)}%)\n`
-          })
-          resultText += '\n'
-        }
-        
-        // 나무 구조 분석
-        resultText += '🌲 나무 구조 분석:\n'
-        const hasTrunk = parsedAnalysis.some(d => d.class === '기둥')
-        const hasCrown = parsedAnalysis.some(d => d.class === '수관')
-        const hasBranches = parsedAnalysis.some(d => d.class === '가지')
-        const hasLeaves = parsedAnalysis.some(d => d.class === '나뭇잎')
-        const hasRoots = parsedAnalysis.some(d => d.class === '뿌리')
-        
-        if (hasTrunk) {
-          resultText += '• 기둥이 그려져 있습니다. 안정감과 지지력을 나타냅니다.\n'
-        } else {
-          resultText += '• 기둥이 명확하지 않습니다. 지지력이나 안정감이 부족할 수 있습니다.\n'
-        }
-        
-        if (hasCrown) {
-          resultText += '• 수관이 그려져 있습니다. 성장과 발전의 의지를 보여줍니다.\n'
-        } else {
-          resultText += '• 수관이 명확하지 않습니다. 성장 욕구가 제한적일 수 있습니다.\n'
-        }
-        
-        if (hasBranches) {
-          resultText += '• 가지가 그려져 있습니다. 다양한 방향으로의 확장을 원합니다.\n'
-        } else {
-          resultText += '• 가지가 명확하지 않습니다. 확장성이나 다양성이 부족할 수 있습니다.\n'
-        }
-        
-        if (hasLeaves) {
-          resultText += '• 나뭇잎이 그려져 있습니다. 활력과 생명력을 나타냅니다.\n'
-        } else {
-          resultText += '• 나뭇잎이 명확하지 않습니다. 활력이나 생명력이 부족할 수 있습니다.\n'
-        }
-        
-        if (hasRoots) {
-          resultText += '• 뿌리가 그려져 있습니다. 안정감과 소속감을 중시합니다.\n'
-        } else {
-          resultText += '• 뿌리가 명확하지 않습니다. 안정감이나 소속감이 부족할 수 있습니다.\n'
-        }
-        
-        resultText += '\n'
-        
-        // 심리 분석
-        resultText += '🧠 심리 분석:\n'
-        const totalElements = parsedAnalysis.length
-        const creativeElements = parsedAnalysis.filter(d => 
-          ['꽃', '열매', '새', '다람쥐', '구름', '달', '별'].includes(d.class)
-        ).length
-        
-        if (totalElements >= 6) {
-          resultText += '• 매우 상세한 나무 그림입니다. 높은 인지 능력과 상상력을 보여줍니다.\n'
-        } else if (totalElements >= 3) {
-          resultText += '• 적당한 수준의 상세함을 보입니다. 균형 잡힌 인지 능력을 가지고 있습니다.\n'
-        } else {
-          resultText += '• 기본적인 나무 구조입니다. 더 자세한 표현을 시도해볼 수 있습니다.\n'
-        }
-        
-        if (creativeElements >= 2) {
-          resultText += '• 창의적이고 풍부한 상상력을 가지고 있습니다. 예술적 감각이 뛰어납니다.\n'
-        } else if (creativeElements === 1) {
-          resultText += '• 기본적인 창의성을 보입니다. 더 다양한 요소를 추가해보세요.\n'
-        } else {
-          resultText += '• 창의적 요소가 부족합니다. 상상력을 발휘해 다양한 요소를 그려보세요.\n'
-        }
-        
-        resultText += '\n'
-        
-        // 추천사항
-        resultText += '💡 추천사항:\n'
-        if (!hasTrunk) {
-          resultText += '1. 나무의 기둥을 더 명확하게 그려보세요.\n'
-        }
-        if (!hasCrown) {
-          resultText += '2. 수관을 추가하여 나무를 완성해보세요.\n'
-        }
-        if (!hasBranches) {
-          resultText += '3. 가지를 그려서 나무가 더 생동감 있게 보이도록 해보세요.\n'
-        }
-        if (!hasLeaves) {
-          resultText += '4. 나뭇잎을 추가하여 활력을 표현해보세요.\n'
-        }
-        if (!hasRoots) {
-          resultText += '5. 뿌리를 그려서 안정감을 표현해보세요.\n'
-        }
-        if (creativeElements < 2) {
-          resultText += '6. 주변 환경(새, 꽃, 구름 등)을 추가해보세요.\n'
-        }
-        
-        if (hasTrunk && hasCrown && hasBranches && hasLeaves) {
-          resultText += '1. 훌륭한 나무 그림입니다! 더 창의적인 요소들을 추가해보세요.\n'
-        }
-        
-        
-        // 챗봇 분석 요청
+        // 챗봇 분석 요청 (파싱된 기본 분석 결과는 표시하지 않음)
         getChatbotAnalysis(parsedAnalysis)
       } catch (error) {
         console.error('분석 결과 파싱 오류:', error)
@@ -320,10 +217,12 @@ function TreeAnalysis() {
       <div style={{ 
         padding: '20px',
         minHeight: '100vh',
+        maxHeight: '100vh',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '30px'
+        gap: '30px',
+        overflow: 'hidden'
       }}>
         
         {/* 상단 이미지 영역 */}
@@ -421,7 +320,7 @@ function TreeAnalysis() {
           <div style={{
             width: '90%',
             maxWidth: '600px',
-            minHeight: '150px',
+            height: '400px',
             border: '2px solid #000',
             borderRadius: '10px',
             padding: '15px',

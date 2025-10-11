@@ -220,42 +220,6 @@ function Analysis() {
           createAnalyzedImage(savedDrawnImage, parsedAnalysis.detected_elements)
         }
         
-        // 분석 결과를 텍스트로 변환
-        let resultText = ''
-        
-        // 탐지된 요소들 표시
-        if (parsedAnalysis.detected_elements && parsedAnalysis.detected_elements.length > 0) {
-          resultText += '🔍 탐지된 요소들:\n'
-          parsedAnalysis.detected_elements.forEach((element, index) => {
-            resultText += `• ${element.class} (신뢰도: ${(element.confidence * 100).toFixed(1)}%)\n`
-          })
-          resultText += '\n'
-        }
-        
-        if (parsedAnalysis.house_elements) {
-          resultText += '🏠 집 요소 분석:\n'
-          Object.entries(parsedAnalysis.house_elements).forEach(([key, value]) => {
-            resultText += `• ${value}\n`
-          })
-          resultText += '\n'
-        }
-        
-        if (parsedAnalysis.psychological_analysis) {
-          resultText += '🧠 심리 분석:\n'
-          Object.entries(parsedAnalysis.psychological_analysis).forEach(([key, value]) => {
-            resultText += `• ${value}\n`
-          })
-          resultText += '\n'
-        }
-        
-        if (parsedAnalysis.recommendations) {
-          resultText += '💡 추천사항:\n'
-          parsedAnalysis.recommendations.forEach((rec, index) => {
-            resultText += `${index + 1}. ${rec}\n`
-          })
-        }
-        
-        
         // 갤러리에서 온 경우 분석 결과를 기존 그림에 업데이트
         if (isFromGallery) {
           // AI 심리 분석 내용을 포함하여 업데이트
@@ -266,7 +230,7 @@ function Analysis() {
           updateGalleryDrawing(analysisWithSpeech)
         }
         
-        // 챗봇 분석 요청
+        // 챗봇 분석 요청 (파싱된 기본 분석 결과는 표시하지 않음)
         getChatbotAnalysis(parsedAnalysis)
       } catch (error) {
         console.error('분석 결과 파싱 오류:', error)
@@ -473,10 +437,12 @@ function Analysis() {
       <div style={{ 
         padding: '20px',
         minHeight: '100vh',
+        maxHeight: '100vh',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '30px'
+        gap: '30px',
+        overflow: 'hidden'
       }}>
         
         {/* 상단 이미지 영역 */}
@@ -574,7 +540,7 @@ function Analysis() {
           <div style={{
             width: '90%',
             maxWidth: '600px',
-            minHeight: '150px',
+            height: '400px',
             border: '2px solid #000',
             borderRadius: '10px',
             padding: '15px',
