@@ -17,6 +17,7 @@ function Join() {
     agreeMarketing: false,
   });
   const [error, setError] = useState(null);
+  const [modal, setModal] = useState({ show: false, message: '', type: '', onConfirm: null });
   const navigate = useNavigate(); // 라우터 이동 함수
   const [emailCheckMessage, setEmailCheckMessage] = useState('');
   const [isEmailAvailable, setIsEmailAvailable] = useState(false);
@@ -84,12 +85,18 @@ function Join() {
       });
 
       if (response.status === 201) {
-          alert(response.data.message);
-          // 회원가입 성공 시 사용자 ID를 로컬 스토리지에 저장 (선택 사항)
-          if (response.data.user_id) {
-              localStorage.setItem('userId', response.data.user_id);
-          }
-          navigate('/login'); // 회원가입 성공 후 로그인 페이지로 이동
+          setModal({ 
+            show: true, 
+            message: response.data.message, 
+            type: 'success',
+            onConfirm: () => {
+              // 회원가입 성공 시 사용자 ID를 로컬 스토리지에 저장 (선택 사항)
+              if (response.data.user_id) {
+                  localStorage.setItem('userId', response.data.user_id);
+              }
+              navigate('/login'); // 회원가입 성공 후 로그인 페이지로 이동
+            }
+          });
       }
     } catch (err) {
       if (err.response && err.response.data && err.response.data.error) {
@@ -138,8 +145,116 @@ function Join() {
     */
   };
 
+  const closeModal = () => {
+    setModal({ show: false, message: '', type: '', onConfirm: null });
+  };
+
   return (
     <div className="w-[29rem] h-[58rem] rounded-3xl bg-white flex flex-col overflow-hidden">
+      {/* 모달 오버레이 */}
+      {modal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            margin: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 모달 아이콘 */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              {modal.type === 'success' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#d4edda',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#28a745' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'error' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#dc3545' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* 모달 메시지 */}
+            <p style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '25px',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-line'
+            }}>
+              {modal.message}
+            </p>
+            
+            {/* 버튼 */}
+            <button
+              onClick={() => {
+                if (modal.onConfirm) {
+                  modal.onConfirm();
+                }
+                closeModal();
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: modal.type === 'success' ? 'rgb(39, 192, 141)' : '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.opacity = '0.9';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = '1';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between flex-shrink-0">
         <button className="text-gray-600" onClick={() => navigate(-1)}>
           <svg

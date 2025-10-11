@@ -8,6 +8,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [modal, setModal] = useState({ show: false, message: '', type: '', onConfirm: null });
   const navigate = useNavigate(); // ✅ 라우터 이동 함수
 
   // 컴포넌트 마운트 시 로그인 상태 확인
@@ -83,21 +84,26 @@ function Login() {
 
       if (response.status === 200) {
         // 로그인 성공 시 처리
-        alert(response.data.message);
-        
-        // JWT 토큰과 사용자 정보를 로컬 스토리지에 저장
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('userId', response.data.user_id);
-        localStorage.setItem('username', response.data.username);
-        
-        // 로그인 유지 옵션에 따라 이메일 저장
-        if (rememberMe) {
-          localStorage.setItem('rememberedEmail', fullEmail);
-        } else {
-          localStorage.removeItem('rememberedEmail');
-        }
-        
-        navigate('/mainpage'); // 로그인 성공 후 메인 페이지로 이동
+        setModal({ 
+          show: true, 
+          message: response.data.message, 
+          type: 'success',
+          onConfirm: () => {
+            // JWT 토큰과 사용자 정보를 로컬 스토리지에 저장
+            localStorage.setItem('authToken', response.data.token);
+            localStorage.setItem('userId', response.data.user_id);
+            localStorage.setItem('username', response.data.username);
+            
+            // 로그인 유지 옵션에 따라 이메일 저장
+            if (rememberMe) {
+              localStorage.setItem('rememberedEmail', fullEmail);
+            } else {
+              localStorage.removeItem('rememberedEmail');
+            }
+            
+            navigate('/mainpage'); // 로그인 성공 후 메인 페이지로 이동
+          }
+        });
       }
     } catch (err) {
       if (err.response && err.response.data && err.response.data.error) {
@@ -116,9 +122,117 @@ function Login() {
     navigate('/');
   };
 
+  const closeModal = () => {
+    setModal({ show: false, message: '', type: '', onConfirm: null });
+  };
+
 
   return (
     <div className="w-[29rem] h-[58rem] rounded-3xl bg-white flex flex-col">
+      {/* 모달 오버레이 */}
+      {modal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            margin: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            {/* 모달 아이콘 */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              {modal.type === 'success' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#d4edda',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#28a745' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {modal.type === 'error' && (
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  backgroundColor: '#f8d7da',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg style={{ width: '30px', height: '30px', color: '#dc3545' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* 모달 메시지 */}
+            <p style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '25px',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-line'
+            }}>
+              {modal.message}
+            </p>
+            
+            {/* 버튼 */}
+            <button
+              onClick={() => {
+                if (modal.onConfirm) {
+                  modal.onConfirm();
+                }
+                closeModal();
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: modal.type === 'success' ? 'rgb(39, 192, 141)' : '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.opacity = '0.9';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = '1';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="w-full shadow-sm py-4 px-6 flex items-center justify-between">
         <button className="text-gray-600 hover:text-gray-800 transition-colors" onClick={handleBack}>
           <img src="/src/imgdata/icon/backarrow.png" alt="뒤로가기" style={{ width: '24px', height: '24px' }} />
